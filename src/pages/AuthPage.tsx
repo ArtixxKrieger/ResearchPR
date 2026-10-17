@@ -41,9 +41,7 @@ export function AuthPage() {
       } else {
         const needsEmailConfirmation = await signUp(normalizedEmail, password)
         if (needsEmailConfirmation) {
-          setMessage('Account created. Check your email to confirm your account, then sign in.')
-          setMode('sign-in')
-          setPassword('')
+          setError('Supabase is still requiring email confirmation. Disable Confirm email in the Supabase Auth settings, then create the account again.')
         }
       }
     } catch (cause) {
@@ -52,6 +50,8 @@ export function AuthPage() {
       setSubmitting(false)
     }
   }
+
+  const displayedError = error ?? sessionError
 
   return (
     <main className="grid min-h-screen place-items-center bg-blue-50 px-5 py-10">
@@ -72,7 +72,7 @@ export function AuthPage() {
         {supabaseConfigError && (
           <p role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{supabaseConfigError}</p>
         )}
-        {(error || sessionError) && <p role="alert" className="mt-4 text-sm text-rose-700">{error ?? sessionError}</p>}
+        {displayedError && <p role="alert" className="mt-4 text-sm text-rose-700">{displayedError}</p>}
         {message && <p role="status" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{message}</p>}
         <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4">
           <label htmlFor="auth-email" className="block">
