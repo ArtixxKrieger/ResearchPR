@@ -74,12 +74,12 @@ html[data-theme="dark"] [class~="text-blue-800"] {
 html[data-theme="dark"] [class~="text-blue-700"],
 html[data-theme="dark"] [class~="text-blue-600"],
 html[data-theme="dark"] [class~="text-blue-500"] {
-  color: #a9c7f4 !important;
+  color: #c4d8f2 !important;
 }
 
 html[data-theme="dark"] [class~="text-blue-400"],
 html[data-theme="dark"] [class~="text-blue-300"] {
-  color: #89a6cc !important;
+  color: #b5c9e2 !important;
 }
 
 html[data-theme="dark"] [class~="border-blue-50"],
@@ -119,6 +119,28 @@ html[data-theme="dark"] [class~="text-rose-600"] {
 html[data-theme="dark"] [class~="text-teal-700"],
 html[data-theme="dark"] [class~="text-violet-700"] {
   color: #b5c9f3 !important;
+}
+
+html[data-theme="dark"] .recharts-cartesian-axis-tick-value,
+html[data-theme="dark"] .recharts-legend-item-text {
+  fill: #cbd5e1 !important;
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .recharts-cartesian-grid line,
+html[data-theme="dark"] .recharts-cartesian-axis line {
+  stroke: #334155 !important;
+}
+
+html[data-theme="dark"] .recharts-default-tooltip {
+  color: #e2e8f0 !important;
+  background-color: #111c2e !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .recharts-tooltip-item,
+html[data-theme="dark"] .recharts-tooltip-label {
+  color: #e2e8f0 !important;
 }
 
 html[data-theme="dark"] [class~="shadow-sm"],

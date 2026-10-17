@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { ArrowRight, Download, Printer, TrendingDown } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ArrowRight, Download, Printer, Search, TrendingDown } from 'lucide-react'
 import {
   Bar,
   BarChart,
@@ -17,6 +17,7 @@ import { calculateMonthlyKwh, formatNumber, formatPeso, rankAppliances } from '.
 
 export function Reports() {
   const { household, appliances, loading, proposedHours } = useEnergy()
+  const [applianceSearch, setApplianceSearch] = useState('')
   const ranked = useMemo(() => rankAppliances(appliances), [appliances])
   const originalKwh = ranked.reduce((total, item) => total + item.originalKwh, 0)
   const rate = household?.rate ?? 12
@@ -33,7 +34,9 @@ export function Reports() {
   const topThree = ranked.slice(0, 3).reduce((sum, item) => sum + item.originalKwh, 0)
   const topThreeShare = originalKwh > 0 ? topThree / originalKwh * 100 : 0
   const billGap = household ? originalKwh - household.monthlyConsumption : null
-  const chartHeight = Math.min(480, Math.max(240, chartData.length * 48))
+  const chartLimit = 8
+  const visibleChartData = chartData.slice(0, chartLimit)
+  const filteredRanked = ranked.filter((item) => item.name.toLowerCase().includes(applianceSearch.trim().toLowerCase()))
 
   function downloadCsv() {
     const rows = [
@@ -120,13 +123,16 @@ export function Reports() {
           </div>
 
           <div className="grid items-start gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-            <SectionCard title="Consumption by appliance" description="Monthly baseline compared with the proposed-hours projection.">
-              <div className="w-full" style={{ height: chartHeight }} role="img" aria-label="Bar chart comparing original and projected monthly kWh use per appliance">
+            <SectionCard
+              title="Consumption by appliance"
+              description={`Top ${visibleChartData.length} of ${chartData.length} appliances by monthly use.`}
+            >
+              <div className="w-full" style={{ height: Math.min(480, Math.max(230, visibleChartData.length * 56)) }} role="img" aria-label={`Bar chart comparing monthly energy use for the top ${visibleChartData.length} appliances`}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart layout="vertical" data={chartData} margin={{ top: 8, right: 12, left: 4, bottom: 8 }} barGap={4}>
+                  <BarChart layout="vertical" data={visibleChartData} margin={{ top: 8, right: 12, left: 4, bottom: 8 }} barGap={4}>
                     <CartesianGrid stroke="#e7efff" strokeDasharray="4 4" vertical />
                     <XAxis type="number" tick={{ fill: '#7891b2', fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <YAxis type="category" dataKey="appliance" width={90} tick={{ fill: '#527099', fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="appliance" width={112} tick={{ fill: '#527099', fontSize: 10 }} tickFormatter={(label: string) => label.length > 16 ? `${label.slice(0, 15)}…` : label} tickLine={false} axisLine={false} />
                     <Tooltip formatter={(value) => [`${formatNumber(Number(value))} kWh`, '']} contentStyle={{ borderRadius: 12, borderColor: '#dbeafe' }} />
                     <Legend wrapperStyle={{ fontSize: 12, color: '#31527c' }} />
                     <Bar dataKey="original" name="Original" fill="#93c5fd" radius={[5, 5, 0, 0]} />
@@ -154,11 +160,25 @@ export function Reports() {
 
           <SectionCard
             title="Usage breakdown & recommendations"
-            description="Sorted by estimated consumption. Edit appliance wattage or usage from your dashboard."
+            description={`Showing ${filteredRanked.length} of ${ranked.length}; sorted by estimated consumption.`}
             action={<Link to="/" className="no-print inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900">Edit appliance data <ArrowRight size={14} /></Link>}
           >
-            <div className="divide-y divide-blue-50">
-              {ranked.map((item, index) => {
+            <label className="no-print mb-4 flex max-w-md items-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-2.5 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
+              <Search size={16} className="shrink-0 text-blue-400" />
+              <input
+                type="search"
+                value={applianceSearch}
+                onChange={(event) => setApplianceSearch(event.target.value)}
+                placeholder="Find an appliance"
+                aria-label="Filter appliance report"
+                className="min-w-0 flex-1 bg-transparent text-sm text-blue-950 outline-none placeholder:text-blue-300"
+              />
+            </label>
+            {filteredRanked.length === 0 ? (
+              <EmptyState>No appliances match “{applianceSearch}”. Try a different search.</EmptyState>
+            ) : (
+              <div className="divide-y divide-blue-50">
+              {filteredRanked.map((item, index) => {
                 const projected = projectedByAppliance.get(item.id) ?? item.originalKwh
                 const share = originalKwh > 0 ? item.originalKwh / originalKwh * 100 : 0
                 const reductionHours = Math.min(1, proposedHours[item.id] ?? item.hoursPerDay)
@@ -187,7 +207,8 @@ export function Reports() {
                   </div>
                 )
               })}
-            </div>
+              </div>
+            )}
           </SectionCard>
 
           <div className={`flex items-start gap-3 rounded-xl border p-4 text-sm ${savedKwh >= 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>

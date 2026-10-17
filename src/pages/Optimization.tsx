@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { ArrowDown, ArrowRight, Check, Pencil, RotateCcw, Save, SlidersHorizontal, Sparkles, TrendingDown, X } from 'lucide-react'
+import { ArrowDown, ArrowRight, Check, Pencil, RotateCcw, Save, Search, SlidersHorizontal, Sparkles, TrendingDown, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { EmptyState, Field, LoadingState, PageHeading, SectionCard } from '../components/Ui'
 import { useEnergy } from '../data/EnergyContext'
@@ -45,6 +45,7 @@ export function Optimization() {
   const [savingId, setSavingId] = useState<string | null>(null)
   const [savedId, setSavedId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [applianceSearch, setApplianceSearch] = useState('')
   const ranked = useMemo(() => rankAppliances(appliances), [appliances])
   const rate = household?.rate ?? 12
   const projected = useMemo(
@@ -57,6 +58,10 @@ export function Optimization() {
       }
     }),
     [ranked, proposedHours],
+  )
+  const visibleProjected = useMemo(
+    () => projected.filter((item) => item.name.toLowerCase().includes(applianceSearch.trim().toLowerCase())),
+    [projected, applianceSearch],
   )
   const originalKwh = ranked.reduce((sum, appliance) => sum + appliance.originalKwh, 0)
   const projectedKwh = projected.reduce((sum, appliance) => sum + appliance.projectedKwh, 0)
@@ -120,9 +125,24 @@ export function Optimization() {
           </div>
 
           <div className="grid items-start gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-            <SectionCard title="Usage plan" description="Ranked by monthly energy use. Edit your saved details or adjust hours to preview changes.">
+            <SectionCard title="Usage plan" description={`Showing ${visibleProjected.length} of ${projected.length}, ranked by monthly energy use.`}>
+              <label className="mb-4 flex w-full max-w-md items-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-2.5 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
+                <Search size={16} className="shrink-0 text-blue-400" />
+                <input
+                  type="search"
+                  value={applianceSearch}
+                  onChange={(event) => setApplianceSearch(event.target.value)}
+                  placeholder="Find an appliance"
+                  aria-label="Filter usage plan appliances"
+                  className="min-w-0 flex-1 bg-transparent text-sm text-blue-950 outline-none placeholder:text-blue-300"
+                />
+              </label>
+              {visibleProjected.length === 0 ? (
+                <EmptyState>No appliances match “{applianceSearch}”. Try another search.</EmptyState>
+              ) : (
               <div className="space-y-5">
-                {projected.map((appliance, index) => {
+                {visibleProjected.map((appliance) => {
+                  const index = ranked.findIndex((item) => item.id === appliance.id)
                   const changed = appliance.proposedHours !== appliance.hoursPerDay
                   return (
                     <div key={appliance.id} className="rounded-xl border border-blue-100 p-4">
@@ -278,6 +298,7 @@ export function Optimization() {
                   )
                 })}
               </div>
+              )}
             </SectionCard>
 
             <div className="space-y-5">
