@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Printer, TrendingDown } from 'lucide-react'
+import { ArrowRight, Download, Printer, TrendingDown } from 'lucide-react'
 import {
   Bar,
   BarChart,
@@ -30,6 +30,38 @@ export function Reports() {
   const savedPercent = originalKwh > 0 ? (savedKwh / originalKwh) * 100 : 0
   const recommendations = ranked.filter((item) => item.originalKwh > 0).slice(0, 3)
   const projectedByAppliance = new Map(chartData.map((chartItem) => [chartItem.id, chartItem.projected]))
+  const topThree = ranked.slice(0, 3).reduce((sum, item) => sum + item.originalKwh, 0)
+  const topThreeShare = originalKwh > 0 ? topThree / originalKwh * 100 : 0
+  const billGap = household ? originalKwh - household.monthlyConsumption : null
+  const chartHeight = Math.min(480, Math.max(240, chartData.length * 48))
+
+  function downloadCsv() {
+    const rows = [
+      ['Appliance', 'Wattage (W)', 'Quantity', 'Original hours/day', 'Proposed hours/day', 'Days/month', 'Original kWh/month', 'Projected kWh/month', 'Projected cost (PHP)'],
+      ...ranked.map((item) => {
+        const projected = projectedByAppliance.get(item.id) ?? item.originalKwh
+        const safeName = /^[=+\-@\t\r]/.test(item.name) ? `'${item.name}` : item.name
+        return [
+          safeName,
+          String(item.wattage),
+          String(item.quantity),
+          String(item.hoursPerDay),
+          String(proposedHours[item.id] ?? item.hoursPerDay),
+          String(item.daysPerMonth),
+          item.originalKwh.toFixed(2),
+          projected.toFixed(2),
+          (projected * rate).toFixed(2),
+        ]
+      }),
+    ]
+    const csv = rows.map((row) => row.map((cell) => `"${cell.replaceAll('"', '""')}"`).join(',')).join('\r\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'pagsibol-energy-report.csv'
+    link.click()
+    window.setTimeout(() => URL.revokeObjectURL(url), 0)
+  }
 
   if (loading) return <LoadingState />
 
@@ -38,11 +70,16 @@ export function Reports() {
       <PageHeading
         eyebrow="Research summary"
         title="Results & reports"
-        description="Compare appliance-based baseline estimates with your simulated optimized scenario."
+        description="Review monthly usage estimates, planned changes, and bill comparisons in one report."
         action={
-          <button type="button" onClick={() => window.print()} disabled={!appliances.length} className="no-print inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50">
-            <Printer size={16} /> Print report
-          </button>
+          <div className="no-print flex flex-wrap gap-2">
+            <button type="button" onClick={downloadCsv} disabled={!appliances.length} className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50">
+              <Download size={16} /> Export CSV
+            </button>
+            <button type="button" onClick={() => window.print()} disabled={!appliances.length} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50">
+              <Printer size={16} /> Print report
+            </button>
+          </div>
         }
       />
 
@@ -58,7 +95,7 @@ export function Reports() {
             <p className="mt-1 text-sm">Prepared {new Date().toLocaleDateString('en-PH')}</p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <Metric label="Original estimated use" value={`${formatNumber(originalKwh)} kWh`} note="Monthly appliance baseline" />
             <Metric label="Optimized projection" value={`${formatNumber(projectedKwh)} kWh`} note="Based on proposed hours" />
             <Metric
@@ -72,16 +109,24 @@ export function Reports() {
               note={`${formatNumber(Math.abs(savedPercent))}% projected ${savedKwh >= 0 ? 'reduction' : 'increase'}`}
               highlight={savedKwh >= 0}
             />
+            <Metric label="Top 3 appliance share" value={`${formatNumber(topThreeShare)}%`} note={`${formatNumber(topThree)} kWh of the appliance estimate`} />
+            {household && billGap !== null && (
+              <Metric
+                label={billGap >= 0 ? 'Estimate above bill' : 'Estimate below bill'}
+                value={`${formatNumber(Math.abs(billGap))} kWh`}
+                note={`Actual billed use: ${formatNumber(household.monthlyConsumption)} kWh`}
+              />
+            )}
           </div>
 
           <div className="grid items-start gap-5 xl:grid-cols-[1.25fr_0.75fr]">
             <SectionCard title="Consumption by appliance" description="Monthly baseline compared with the proposed-hours projection.">
-              <div className="h-80 w-full" role="img" aria-label="Bar chart comparing original and projected monthly kWh use per appliance">
+              <div className="w-full" style={{ height: chartHeight }} role="img" aria-label="Bar chart comparing original and projected monthly kWh use per appliance">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 8 }} barGap={4}>
-                    <CartesianGrid stroke="#e7efff" strokeDasharray="4 4" vertical={false} />
-                    <XAxis dataKey="appliance" tick={{ fill: '#527099', fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <YAxis tick={{ fill: '#7891b2', fontSize: 11 }} tickLine={false} axisLine={false} />
+                  <BarChart layout="vertical" data={chartData} margin={{ top: 8, right: 12, left: 4, bottom: 8 }} barGap={4}>
+                    <CartesianGrid stroke="#e7efff" strokeDasharray="4 4" vertical />
+                    <XAxis type="number" tick={{ fill: '#7891b2', fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis type="category" dataKey="appliance" width={90} tick={{ fill: '#527099', fontSize: 10 }} tickLine={false} axisLine={false} />
                     <Tooltip formatter={(value) => [`${formatNumber(Number(value))} kWh`, '']} contentStyle={{ borderRadius: 12, borderColor: '#dbeafe' }} />
                     <Legend wrapperStyle={{ fontSize: 12, color: '#31527c' }} />
                     <Bar dataKey="original" name="Original" fill="#93c5fd" radius={[5, 5, 0, 0]} />
@@ -107,24 +152,37 @@ export function Reports() {
             </SectionCard>
           </div>
 
-          <SectionCard title="Appliance ranking & recommendations" description="Sorted from highest to lowest estimated monthly consumption.">
+          <SectionCard
+            title="Usage breakdown & recommendations"
+            description="Sorted by estimated consumption. Edit appliance wattage or usage from your dashboard."
+            action={<Link to="/" className="no-print inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900">Edit appliance data <ArrowRight size={14} /></Link>}
+          >
             <div className="divide-y divide-blue-50">
               {ranked.map((item, index) => {
                 const projected = projectedByAppliance.get(item.id) ?? item.originalKwh
-                const reductionHours = Math.min(1, item.hoursPerDay)
+                const share = originalKwh > 0 ? item.originalKwh / originalKwh * 100 : 0
+                const reductionHours = Math.min(1, proposedHours[item.id] ?? item.hoursPerDay)
                 const suggestedSaving = calculateMonthlyKwh(item.wattage, item.quantity, reductionHours, item.daysPerMonth)
                 return (
-                  <div key={item.id} className="grid gap-3 py-3 first:pt-0 sm:grid-cols-[2fr_1fr_1fr_3fr] sm:items-center">
+                  <div key={item.id} className="grid gap-3 py-4 first:pt-0 sm:grid-cols-[minmax(160px,1.6fr)_repeat(2,minmax(100px,0.8fr))_minmax(140px,1fr)] sm:items-center">
                     <div className="flex items-center gap-2">
                       <span className="grid size-6 place-items-center rounded-md bg-blue-50 text-[11px] font-bold text-blue-700">{index + 1}</span>
-                      <span className="text-sm font-semibold text-blue-950">{item.name}</span>
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-blue-950">{item.name}</span>
+                        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-blue-100">
+                          <div className="h-full rounded-full bg-blue-600" style={{ width: `${share}%` }} />
+                        </div>
+                        <span className="mt-1 block text-[11px] text-blue-400">{formatNumber(share)}% of total estimate</span>
+                      </div>
                     </div>
                     <ReportLine label="Original" value={`${formatNumber(item.originalKwh)} kWh`} />
-                    <ReportLine label="Projected" value={`${formatNumber(projected)} kWh`} />
+                    <ReportLine label="Planned" value={`${formatNumber(projected)} kWh`} />
                     <p className="text-xs leading-5 text-blue-600">
                       {recommendations.includes(item)
-                      ? `Reducing by ${formatNumber(reductionHours)} hour${reductionHours === 1 ? '' : 's'}/day saves about ${formatNumber(suggestedSaving)} kWh (${formatPeso(suggestedSaving * rate)}) monthly.`
-                        : 'Consider reviewing operating hours to reduce estimated consumption.'}
+                        ? reductionHours > 0
+                          ? `Try reducing the current plan by ${formatNumber(reductionHours)} h/day to save about ${formatNumber(suggestedSaving)} kWh (${formatPeso(suggestedSaving * rate)}) monthly.`
+                          : 'This appliance is already set to 0 hours/day in the current plan.'
+                        : 'Review the schedule to find potential savings.'}
                     </p>
                   </div>
                 )
