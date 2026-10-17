@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Bolt, LockKeyhole, Mail } from 'lucide-react'
 import { supabaseConfigError } from '../lib/supabaseClient'
 import { useEnergy } from '../data/EnergyContext'
+import { ThemeSelector } from '../components/ThemeSelector'
 
 export function AuthPage() {
   const { signIn, signUp, error: sessionError } = useEnergy()
@@ -55,6 +56,9 @@ export function AuthPage() {
 
   return (
     <main className="grid min-h-screen place-items-center bg-blue-50 px-5 py-10">
+      <div className="fixed right-5 top-5">
+        <ThemeSelector />
+      </div>
       <section className="w-full max-w-md rounded-3xl border border-blue-100 bg-white p-6 shadow-lg shadow-blue-100/70 sm:p-8">
         <div className="mb-6 flex items-center gap-3">
           <span className="grid size-12 place-items-center rounded-2xl bg-blue-700 text-white"><Bolt size={25} fill="currentColor" /></span>

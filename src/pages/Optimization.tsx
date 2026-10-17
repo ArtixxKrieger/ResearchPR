@@ -30,7 +30,7 @@ export function Optimization() {
   return (
     <>
       <PageHeading
-        eyebrow="Rule-based scenario"
+        eyebrow="Usage scenario"
         title="Energy optimization"
         description="Adjust proposed daily operating hours to compare original usage with a transparent projection."
         action={
@@ -140,7 +140,7 @@ export function Optimization() {
             </SectionCard>
 
             <div className="space-y-5">
-              <SectionCard title="Rule-based recommendations" description="Deterministic suggestions based on the entries above.">
+              <SectionCard title="Energy-saving ideas" description="Suggestions based on your appliance details.">
                 {recommendations.length === 0 ? (
                   <EmptyState>Enter a positive appliance usage schedule to see recommendations.</EmptyState>
                 ) : (

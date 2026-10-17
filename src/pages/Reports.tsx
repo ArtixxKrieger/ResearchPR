@@ -46,10 +46,6 @@ export function Reports() {
         }
       />
 
-      <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
-        <strong>Projections, not guaranteed outcomes.</strong> Results reflect the temporary proposed hours set in the optimizer. Without a changed schedule, projected use matches the original estimate. Proposed hours are never saved to Supabase.
-      </div>
-
       {ranked.length === 0 ? (
         <SectionCard title="No appliance results" description="Save appliance usage in the dashboard to generate a report.">
           <EmptyState><Link to="/" className="font-semibold text-blue-700 underline underline-offset-2">Go to Dashboard</Link> to record appliance schedules and build a projected report.</EmptyState>

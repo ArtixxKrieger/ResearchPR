@@ -5,6 +5,7 @@ import { AppLayout } from './components/AppLayout'
 import { AuthPage } from './pages/AuthPage'
 import { LoadingState } from './components/Ui'
 import { useEnergy } from './data/EnergyContext'
+import { ThemeProvider } from './components/ThemeContext'
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(({ Dashboard: page }) => ({ default: page })))
 const Optimization = lazy(() => import('./pages/Optimization').then(({ Optimization: page }) => ({ default: page })))
@@ -32,10 +33,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <EnergyProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </EnergyProvider>
+    <ThemeProvider>
+      <EnergyProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </EnergyProvider>
+    </ThemeProvider>
   )
 }

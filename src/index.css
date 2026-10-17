@@ -29,6 +29,112 @@ button {
   cursor: pointer;
 }
 
+html[data-theme="dark"] body {
+  color: #e2e8f0;
+  background: #0b1220;
+}
+
+html[data-theme="dark"] [class~="bg-blue-50"],
+html[data-theme="dark"] [class~="bg-blue-50/60"],
+html[data-theme="dark"] [class~="bg-blue-50/70"],
+html[data-theme="dark"] [class~="bg-blue-100"] {
+  background-color: #17243a !important;
+}
+
+html[data-theme="dark"] [class~="bg-white"] {
+  background-color: #111c2e !important;
+}
+
+html[data-theme="dark"] [class~="bg-amber-50"] {
+  background-color: #302717 !important;
+}
+
+html[data-theme="dark"] [class~="bg-emerald-50"] {
+  background-color: #102d27 !important;
+}
+
+html[data-theme="dark"] [class~="bg-rose-50"] {
+  background-color: #351d27 !important;
+}
+
+html[data-theme="dark"] [class~="bg-teal-50"] {
+  background-color: #112d31 !important;
+}
+
+html[data-theme="dark"] [class~="bg-violet-50"] {
+  background-color: #28213a !important;
+}
+
+html[data-theme="dark"] [class~="text-blue-950"],
+html[data-theme="dark"] [class~="text-blue-900"],
+html[data-theme="dark"] [class~="text-blue-800"] {
+  color: #e2eaf7 !important;
+}
+
+html[data-theme="dark"] [class~="text-blue-700"],
+html[data-theme="dark"] [class~="text-blue-600"],
+html[data-theme="dark"] [class~="text-blue-500"] {
+  color: #a9c7f4 !important;
+}
+
+html[data-theme="dark"] [class~="text-blue-400"],
+html[data-theme="dark"] [class~="text-blue-300"] {
+  color: #89a6cc !important;
+}
+
+html[data-theme="dark"] [class~="border-blue-50"],
+html[data-theme="dark"] [class~="border-blue-100"],
+html[data-theme="dark"] [class~="border-blue-200"] {
+  border-color: #293b56 !important;
+}
+
+html[data-theme="dark"] [class~="border-amber-200"] {
+  border-color: #725b2c !important;
+}
+
+html[data-theme="dark"] [class~="border-emerald-200"] {
+  border-color: #28634f !important;
+}
+
+html[data-theme="dark"] [class~="border-rose-200"] {
+  border-color: #753b4c !important;
+}
+
+html[data-theme="dark"] [class~="text-amber-900"],
+html[data-theme="dark"] [class~="text-amber-700"] {
+  color: #f5d88e !important;
+}
+
+html[data-theme="dark"] [class~="text-emerald-900"],
+html[data-theme="dark"] [class~="text-emerald-700"] {
+  color: #8de0bb !important;
+}
+
+html[data-theme="dark"] [class~="text-rose-800"],
+html[data-theme="dark"] [class~="text-rose-700"],
+html[data-theme="dark"] [class~="text-rose-600"] {
+  color: #f5a9bb !important;
+}
+
+html[data-theme="dark"] [class~="text-teal-700"],
+html[data-theme="dark"] [class~="text-violet-700"] {
+  color: #b5c9f3 !important;
+}
+
+html[data-theme="dark"] [class~="shadow-sm"],
+html[data-theme="dark"] [class~="shadow-lg"] {
+  --tw-shadow-color: rgb(0 0 0 / 25%);
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select {
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] input::placeholder {
+  color: #7185a1;
+}
+
 @media print {
   @page {
     margin: 15mm;
@@ -69,5 +175,11 @@ button {
 
   .print-report .h-80 {
     height: 260px !important;
+  }
+
+  html[data-theme="dark"] body,
+  html[data-theme="dark"] .print-report [class~="bg-white"] {
+    color: #0f172a !important;
+    background: white !important;
   }
 }
