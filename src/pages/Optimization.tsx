@@ -83,7 +83,7 @@ export function Optimization() {
           <button
             type="button"
             onClick={resetProposedHours}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50 sm:w-auto"
           >
             <RotateCcw size={15} /> Reset scenario
           </button>

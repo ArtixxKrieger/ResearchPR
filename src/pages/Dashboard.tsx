@@ -89,7 +89,7 @@ function SummaryCard({
         <p className="text-xs font-semibold text-blue-500">{label}</p>
         <span className={`grid size-9 place-items-center rounded-xl ${tones[tone]}`}><Icon size={18} /></span>
       </div>
-      <p className="mt-4 text-2xl font-bold tracking-tight text-blue-950">{value}</p>
+      <p className="mt-4 break-words text-xl font-bold leading-tight tracking-tight text-blue-950 sm:text-2xl">{value}</p>
       <p className="mt-1 text-xs text-blue-400">{detail}</p>
     </div>
   )
@@ -214,7 +214,7 @@ export function Dashboard() {
         title="Energy dashboard"
         description="Record your actual billed information separately from appliance-based estimates."
         action={
-          <Link to="/optimization" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800">
+          <Link to="/optimization" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 sm:w-auto">
             Explore projections <ArrowUpRight size={16} />
           </Link>
         }
