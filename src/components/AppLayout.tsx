@@ -35,7 +35,7 @@ export function AppLayout() {
                 Pagsibol Energy Optimizer
               </span>
               <span className="block truncate text-xs text-blue-500">
-                Research prototype · Naic, Cavite
+                Energy research · Naic, Cavite
               </span>
             </span>
           </NavLink>
