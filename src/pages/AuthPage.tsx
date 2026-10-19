@@ -57,7 +57,7 @@ export function AuthPage() {
   return (
     <main className="auth-screen relative grid min-h-screen bg-blue-50 lg:grid-cols-[1.05fr_0.95fr]">
       <section className="auth-story relative hidden min-h-screen flex-col justify-between overflow-hidden bg-blue-950 p-10 text-white lg:flex xl:p-16">
-        <div className="pointer-events-none absolute -right-44 top-1/4 size-[34rem] rounded-full border border-amber-300/15 shadow-[0_0_0_4rem_rgba(252,211,77,0.025),0_0_0_8rem_rgba(252,211,77,0.02)]" />
+        <div className="pointer-events-none absolute -right-44 top-1/4 size-136 rounded-full border border-amber-300/15 shadow-[0_0_0_4rem_rgba(252,211,77,0.025),0_0_0_8rem_rgba(252,211,77,0.02)]" />
         <div className="relative">
           <div className="flex items-center gap-3">
             <span className="grid size-12 place-items-center rounded-2xl bg-amber-300 text-blue-950"><Bolt size={25} fill="currentColor" /></span>
