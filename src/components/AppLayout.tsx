@@ -3,6 +3,7 @@ import { Activity, BarChart3, Bolt, ClipboardList, House, LogOut, X } from 'luci
 import { useState } from 'react'
 import { useEnergy } from '../data/EnergyContext'
 import { ThemeSelector } from './ThemeSelector'
+import { PwaInstallButton } from './PwaInstallButton'
 
 const navigation = [
   { to: '/', label: 'Dashboard', icon: House, end: true },
@@ -45,6 +46,7 @@ export function AppLayout() {
               <p className="text-xs font-semibold text-blue-200">{user?.email}</p>
             </div>
             <ThemeSelector variant="dark" />
+            <PwaInstallButton dark />
             <button type="button" onClick={() => void handleSignOut()} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/20 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10">
               <LogOut size={14} /> Sign out
             </button>

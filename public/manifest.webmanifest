@@ -1,0 +1,28 @@
+{
+  "id": "/",
+  "name": "Pagsibol Household Energy Study",
+  "short_name": "Pagsibol Energy",
+  "description": "Explore household electricity use, appliance estimates, and practical schedule changes.",
+  "lang": "en-PH",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eff6ff",
+  "theme_color": "#eff6ff",
+  "categories": ["education", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
