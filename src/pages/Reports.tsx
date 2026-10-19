@@ -4,7 +4,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -14,6 +13,46 @@ import { Link } from 'react-router-dom'
 import { EmptyState, LoadingState, PageHeading, SectionCard } from '../components/Ui'
 import { useEnergy } from '../data/EnergyContext'
 import { calculateMonthlyKwh, formatNumber, formatPeso, rankAppliances } from '../lib/calculations'
+
+function ApplianceAxisLabel({
+  x = 0,
+  y = 0,
+  payload,
+}: {
+  x?: number
+  y?: number
+  payload?: { value?: unknown }
+}) {
+  const label = String(payload?.value ?? '')
+  const words = label.split(/\s+/)
+  const lines: string[] = []
+  let line = ''
+
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word
+    if (next.length > 15 && line) {
+      lines.push(line)
+      line = word
+    } else {
+      line = next
+    }
+  }
+  if (line) lines.push(line)
+  const visibleLines = lines.slice(0, 2)
+  if (lines.length > 2) visibleLines[1] = `${visibleLines[1].slice(0, 13)}…`
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text className="report-chart-label" textAnchor="end" fontSize={11} fontWeight={500}>
+        {visibleLines.map((part, index) => (
+          <tspan key={`${part}-${index}`} x={-10} dy={visibleLines.length === 1 ? 4 : index === 0 ? -3 : 13}>
+            {part}
+          </tspan>
+        ))}
+      </text>
+    </g>
+  )
+}
 
 export function Reports() {
   const { household, appliances, loading, proposedHours } = useEnergy()
@@ -125,18 +164,55 @@ export function Reports() {
           <div className="grid items-start gap-5 xl:grid-cols-[1.25fr_0.75fr]">
             <SectionCard
               title="Consumption by appliance"
-              description={`Top ${visibleChartData.length} of ${chartData.length} appliances by monthly use.`}
+              description={`Comparing the top ${visibleChartData.length} of ${chartData.length} appliances by monthly use.`}
             >
-              <div className="w-full" style={{ height: Math.min(480, Math.max(230, visibleChartData.length * 56)) }} role="img" aria-label={`Bar chart comparing monthly energy use for the top ${visibleChartData.length} appliances`}>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-400">Monthly energy · kWh</p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2" aria-label="Chart legend">
+                  <span className="inline-flex items-center gap-2 text-xs font-medium text-blue-600">
+                    <span className="size-2.5 rounded-sm bg-blue-300" /> Original
+                  </span>
+                  <span className="inline-flex items-center gap-2 text-xs font-medium text-blue-600">
+                    <span className="size-2.5 rounded-sm bg-amber-500" /> Planned
+                  </span>
+                </div>
+              </div>
+              <div className="report-chart w-full" style={{ height: Math.min(520, Math.max(250, visibleChartData.length * 64)) }} role="img" aria-label={`Bar chart comparing monthly energy use for the top ${visibleChartData.length} appliances`}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart layout="vertical" data={visibleChartData} margin={{ top: 8, right: 12, left: 4, bottom: 8 }} barGap={4}>
-                    <CartesianGrid stroke="#e7efff" strokeDasharray="4 4" vertical />
-                    <XAxis type="number" tick={{ fill: '#7891b2', fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <YAxis type="category" dataKey="appliance" width={112} tick={{ fill: '#527099', fontSize: 10 }} tickFormatter={(label: string) => label.length > 16 ? `${label.slice(0, 15)}…` : label} tickLine={false} axisLine={false} />
-                    <Tooltip formatter={(value) => [`${formatNumber(Number(value))} kWh`, '']} contentStyle={{ borderRadius: 12, borderColor: '#dbeafe' }} />
-                    <Legend wrapperStyle={{ fontSize: 12, color: '#31527c' }} />
-                    <Bar dataKey="original" name="Original" fill="#93c5fd" radius={[5, 5, 0, 0]} />
-                    <Bar dataKey="projected" name="Optimized (projected)" fill="#2563eb" radius={[5, 5, 0, 0]} />
+                  <BarChart
+                    layout="vertical"
+                    data={visibleChartData}
+                    margin={{ top: 8, right: 14, left: 0, bottom: 8 }}
+                    barGap={5}
+                    barCategoryGap="32%"
+                  >
+                    <CartesianGrid className="report-chart-grid" strokeDasharray="2 5" vertical horizontal={false} />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={10}
+                      allowDecimals={false}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="appliance"
+                      width={132}
+                      tick={<ApplianceAxisLabel />}
+                      tickLine={false}
+                      axisLine={false}
+                      interval={0}
+                    />
+                    <Tooltip
+                      formatter={(value) => [`${formatNumber(Number(value), 2)} kWh`, '']}
+                      labelFormatter={(label) => String(label)}
+                      cursor={{ fill: 'rgba(148, 163, 184, 0.10)', radius: 8 }}
+                      contentStyle={{ borderRadius: 12, borderColor: '#dbeafe', padding: '10px 12px', boxShadow: '0 10px 30px rgba(15, 23, 42, 0.12)' }}
+                      labelStyle={{ marginBottom: 5, fontWeight: 700 }}
+                    />
+                    <Bar dataKey="original" name="Original" fill="#93c5fd" radius={[0, 6, 6, 0]} maxBarSize={14} />
+                    <Bar dataKey="projected" name="Planned" fill="#f59e0b" radius={[0, 6, 6, 0]} maxBarSize={14} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

@@ -106,6 +106,19 @@ button {
   box-shadow: 0 0 0 2rem rgb(23 37 84 / 3%), 0 0 0 4rem rgb(23 37 84 / 2%);
 }
 
+.report-chart .recharts-cartesian-axis-tick-value,
+.report-chart .report-chart-label {
+  fill: #60718a;
+}
+
+.report-chart .recharts-cartesian-grid line {
+  stroke: #dce5f0;
+}
+
+.report-chart .recharts-tooltip-wrapper {
+  outline: none;
+}
+
 @keyframes page-arrive {
   from {
     opacity: 0;
@@ -280,13 +293,15 @@ html[data-theme="dark"] [class~="text-violet-700"] {
 }
 
 html[data-theme="dark"] .recharts-cartesian-axis-tick-value,
-html[data-theme="dark"] .recharts-legend-item-text {
+html[data-theme="dark"] .recharts-legend-item-text,
+html[data-theme="dark"] .report-chart .report-chart-label {
   fill: #d0d0d0 !important;
   color: #d0d0d0 !important;
 }
 
 html[data-theme="dark"] .recharts-cartesian-grid line,
-html[data-theme="dark"] .recharts-cartesian-axis line {
+html[data-theme="dark"] .recharts-cartesian-axis line,
+html[data-theme="dark"] .report-chart .recharts-cartesian-grid line {
   stroke: #3a3a3a !important;
 }
 
