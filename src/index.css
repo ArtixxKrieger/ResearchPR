@@ -183,6 +183,33 @@ html[data-theme="dark"] .mobile-dock {
   border-color: #353535;
 }
 
+html[data-theme="dark"] .dark-menu {
+  border-color: #393939;
+  background-color: #171717 !important;
+  color: #f1f1f1 !important;
+  box-shadow: 0 18px 50px rgb(0 0 0 / 55%);
+}
+
+html[data-theme="dark"] .dark-menu [class~="bg-blue-50"],
+html[data-theme="dark"] .dark-menu [class~="bg-blue-100/70"] {
+  background-color: #292929 !important;
+}
+
+html[data-theme="dark"] .dark-menu [class~="bg-blue-950"] {
+  background-color: #080808 !important;
+}
+
+html[data-theme="dark"] .dark-menu [class~="text-blue-950"],
+html[data-theme="dark"] .dark-menu [class~="text-blue-800"],
+html[data-theme="dark"] .dark-menu [class~="text-blue-700"] {
+  color: #ededed !important;
+}
+
+html[data-theme="dark"] .dark-menu [class~="text-blue-500"],
+html[data-theme="dark"] .dark-menu [class~="text-blue-400"] {
+  color: #a9a9a9 !important;
+}
+
 html[data-theme="dark"] .mobile-dock a[aria-current="page"] > span:first-child {
   color: #111 !important;
 }
