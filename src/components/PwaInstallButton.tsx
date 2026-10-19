@@ -12,19 +12,33 @@ declare global {
   }
 }
 
-export function PwaInstallButton({ dark = false }: { dark?: boolean }) {
+type InstallPlatform = 'apple-mobile' | 'apple-desktop' | 'chromium' | null
+
+export function PwaInstallButton({
+  dark = false,
+  compactOnMobile = false,
+}: {
+  dark?: boolean
+  compactOnMobile?: boolean
+}) {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null)
   const [installing, setInstalling] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
-  const [manualInstallAvailable, setManualInstallAvailable] = useState(false)
+  const [installPlatform, setInstallPlatform] = useState<InstallPlatform>(null)
   const [showInstallInstructions, setShowInstallInstructions] = useState(false)
 
   useEffect(() => {
     const userAgent = navigator.userAgent
-    setManualInstallAvailable(
-      /iPhone|iPad|iPod/.test(userAgent)
-      || (userAgent.includes('Mac') && navigator.maxTouchPoints > 1),
-    )
+    const isAppleMobile = /iPhone|iPad|iPod/.test(userAgent)
+      || (userAgent.includes('Mac') && navigator.maxTouchPoints > 1)
+    const isMacSafari = userAgent.includes('Mac')
+      && /Safari/.test(userAgent)
+      && !/Chrome|Chromium|Edg|OPR/.test(userAgent)
+    const isChromium = /Chrome|Chromium|Edg|OPR/.test(userAgent)
+
+    if (isAppleMobile) setInstallPlatform('apple-mobile')
+    else if (isMacSafari) setInstallPlatform('apple-desktop')
+    else if (isChromium) setInstallPlatform('chromium')
 
     function captureInstallPrompt(event: InstallPromptEvent) {
       event.preventDefault()
@@ -65,41 +79,59 @@ export function PwaInstallButton({ dark = false }: { dark?: boolean }) {
     }
   }
 
-  if (!installPrompt && !manualInstallAvailable && !status) return null
+  if (!installPrompt && !installPlatform && !status) return null
+
+  const installInstructions = installPlatform === 'apple-mobile'
+    ? {
+        title: 'Add this app to your Home Screen',
+        steps: ['Open this page in Safari and tap Share.', 'Choose “Add to Home Screen”.', 'Tap “Add” to finish.'],
+      }
+    : installPlatform === 'apple-desktop'
+      ? {
+          title: 'Add this app to your Dock',
+          steps: ['Open this page in Safari.', 'From the menu bar, choose File, then Add to Dock.', 'Confirm the app name and choose Add.'],
+        }
+      : {
+          title: 'Install from your browser',
+          steps: ['Open the browser menu or address-bar install icon.', 'Choose “Install app” or “Install this site as an app”.', 'Follow the browser prompt to finish.'],
+        }
 
   return (
     <div className="relative shrink-0">
-      {(installPrompt || manualInstallAvailable) && (
+      {(installPrompt || installPlatform) && (
         <button
           type="button"
           onClick={() => void installApp()}
           disabled={installing}
-          aria-expanded={manualInstallAvailable && !installPrompt ? showInstallInstructions : undefined}
-          aria-controls={manualInstallAvailable && !installPrompt ? 'pwa-install-instructions' : undefined}
-          className={`inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition disabled:opacity-60 ${
+          aria-expanded={installPlatform && !installPrompt ? showInstallInstructions : undefined}
+          aria-controls={installPlatform && !installPrompt ? 'pwa-install-instructions' : undefined}
+          aria-label={installing ? 'Opening install prompt' : 'Install app'}
+          className={`inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border py-2 text-xs font-semibold transition disabled:opacity-60 ${
+            compactOnMobile ? 'size-10 px-0 sm:size-auto sm:px-3' : 'px-3'
+          } ${
             dark
               ? 'border-white/20 text-white hover:bg-white/10'
               : 'border-blue-200 bg-white text-blue-800 hover:border-blue-300 hover:bg-blue-50'
           }`}
         >
           <Download size={15} aria-hidden="true" />
-          {installing ? 'Opening…' : manualInstallAvailable && !installPrompt ? 'How to install' : 'Install app'}
+          <span className={compactOnMobile ? 'sr-only sm:not-sr-only' : undefined}>
+            {installing ? 'Opening…' : 'Install app'}
+          </span>
         </button>
       )}
-      {showInstallInstructions && manualInstallAvailable && !installPrompt && (
+      {showInstallInstructions && installPlatform && !installPrompt && (
         <div
           id="pwa-install-instructions"
           role="dialog"
-          aria-label="How to install Pagsibol Energy"
+          aria-label={installInstructions.title}
           className={`absolute right-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border p-4 text-left text-xs shadow-xl ${
             dark ? 'border-white/15 bg-[#171717] text-neutral-100' : 'border-blue-200 bg-white text-blue-900'
           }`}
         >
-          <p className="font-semibold">Add this app to your Home Screen</p>
+          <p className="font-semibold">{installInstructions.title}</p>
           <ol className="mt-2 list-decimal space-y-1 pl-4 leading-5">
-            <li>Open this page in Safari and tap Share.</li>
-            <li>Choose “Add to Home Screen”.</li>
-            <li>Tap “Add” to finish.</li>
+            {installInstructions.steps.map((step) => <li key={step}>{step}</li>)}
           </ol>
           <button
             type="button"

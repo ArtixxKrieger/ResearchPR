@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Activity, BarChart3, Bolt, ClipboardList, House, LogOut, X } from 'lucide-react'
+import { Activity, BarChart3, Bolt, Check, ClipboardList, Cloud, CloudOff, House, LogOut, RefreshCw, X } from 'lucide-react'
 import { useState } from 'react'
 import { useEnergy } from '../data/EnergyContext'
 import { ThemeSelector } from './ThemeSelector'
@@ -12,15 +12,39 @@ const navigation = [
 ]
 
 export function AppLayout() {
-  const { user, error, dismissError, signOut } = useEnergy()
+  const {
+    user,
+    error,
+    dismissError,
+    signOut,
+    online,
+    pendingSyncCount,
+    conflicts,
+    syncOfflineChanges,
+    resolveOfflineConflict,
+  } = useEnergy()
   const [signOutError, setSignOutError] = useState<string | null>(null)
+  const [syncError, setSyncError] = useState<string | null>(null)
 
   async function handleSignOut() {
     setSignOutError(null)
+    if (pendingSyncCount > 0 || conflicts.length > 0) {
+      setSignOutError('Sync or resolve your offline changes before signing out.')
+      return
+    }
     try {
       await signOut()
     } catch (cause) {
       setSignOutError(cause instanceof Error ? cause.message : 'Could not sign out.')
+    }
+  }
+
+  async function handleSync() {
+    setSyncError(null)
+    try {
+      await syncOfflineChanges()
+    } catch (cause) {
+      setSyncError(cause instanceof Error ? cause.message : 'Could not sync offline changes.')
     }
   }
 
@@ -96,6 +120,114 @@ export function AppLayout() {
 
         <main className="page-enter min-w-0">
           {signOutError && <div role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{signOutError}</div>}
+          {(!online || pendingSyncCount > 0) && (
+            <section
+              aria-label="Offline data and sync status"
+              className={`mb-5 rounded-2xl border px-4 py-3 ${
+                online
+                  ? 'border-amber-200 bg-amber-50 text-amber-950'
+                  : 'border-blue-200 bg-white text-blue-950'
+              }`}
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  {online
+                    ? <Cloud size={18} className="mt-0.5 shrink-0 text-emerald-700" aria-hidden="true" />
+                    : <CloudOff size={18} className="mt-0.5 shrink-0 text-blue-700" aria-hidden="true" />}
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {!online
+                        ? 'You are offline. Changes are saved on this device.'
+                        : pendingSyncCount > 0
+                          ? `${pendingSyncCount} change${pendingSyncCount === 1 ? '' : 's'} waiting to sync.`
+                          : 'Back online.'}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 opacity-80">
+                      Offline data is stored in this browser and is not encrypted by the app. Avoid using a shared device.
+                    </p>
+                  </div>
+                </div>
+                {online && pendingSyncCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => void handleSync()}
+                    className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-950 hover:bg-amber-100"
+                  >
+                    <RefreshCw size={14} aria-hidden="true" /> Sync now
+                  </button>
+                )}
+              </div>
+              {syncError && <p role="alert" className="mt-2 text-xs text-rose-700">{syncError}</p>}
+            </section>
+          )}
+          {conflicts.length > 0 && (
+            <section aria-label="Offline sync conflicts" className="mb-5 rounded-2xl border border-rose-200 bg-white p-4 sm:p-5">
+              <div className="flex items-start gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-rose-50 text-rose-700">
+                  <CloudOff size={17} aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="text-sm font-bold text-blue-950">Choose which version to keep</h2>
+                  <p className="mt-1 text-xs leading-5 text-blue-600">
+                    This data changed on another connection while your device was offline. Review both versions before syncing.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 space-y-3">
+                {conflicts.map((conflict) => {
+                  const label = conflict.entity === 'household'
+                    ? 'Actual billed information'
+                    : (conflict.local as { name?: string } | null)?.name
+                      ?? (conflict.remote as { name?: string } | null)?.name
+                      ?? 'Appliance'
+                  const describe = (value: typeof conflict.local) => {
+                    if (!value) return 'Deleted'
+                    if (conflict.entity === 'household') {
+                      const household = value as { monthlyConsumption: number; billAmount: number; rate: number }
+                      return `${household.monthlyConsumption} kWh · ₱${household.billAmount} bill · ₱${household.rate}/kWh`
+                    }
+                    const appliance = value as { wattage: number; quantity: number; hoursPerDay: number; daysPerMonth: number }
+                    return `${appliance.wattage} W · quantity ${appliance.quantity} · ${appliance.hoursPerDay} h/day · ${appliance.daysPerMonth} days/month`
+                  }
+                  return (
+                    <article key={conflict.id} className="rounded-xl border border-blue-100 bg-blue-50/50 p-3">
+                      <h3 className="text-xs font-bold text-blue-950">{label}</h3>
+                      <div className="mt-2 grid gap-2 text-xs sm:grid-cols-2">
+                        <p className="rounded-lg bg-white p-2 text-blue-700">
+                          <strong className="block text-[10px] uppercase tracking-wide text-blue-400">This device</strong>
+                          {describe(conflict.local)}
+                        </p>
+                        <p className="rounded-lg bg-white p-2 text-blue-700">
+                          <strong className="block text-[10px] uppercase tracking-wide text-blue-400">Online version</strong>
+                          {describe(conflict.remote)}
+                        </p>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void resolveOfflineConflict(conflict.id, 'local').catch((cause: unknown) => {
+                            setSyncError(cause instanceof Error ? cause.message : 'Could not keep this device’s version.')
+                          })}
+                          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-blue-950 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800"
+                        >
+                          <Check size={13} aria-hidden="true" /> Keep this device
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void resolveOfflineConflict(conflict.id, 'remote').catch((cause: unknown) => {
+                            setSyncError(cause instanceof Error ? cause.message : 'Could not use the online version.')
+                          })}
+                          className="inline-flex min-h-9 items-center rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-800 hover:bg-blue-50"
+                        >
+                          Use online version
+                        </button>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          )}
           {error && (
             <div role="alert" className="mb-5 flex items-start justify-between gap-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
               <span><strong className="font-semibold">Data service:</strong> {error}</span>
