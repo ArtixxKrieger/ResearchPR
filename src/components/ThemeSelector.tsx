@@ -82,6 +82,30 @@ export function ThemeSelector({
 
   return (
     <div ref={containerRef} className="relative">
+      {compactOnMobile && (
+        <div className="relative size-10 sm:hidden">
+          <select
+            value={theme}
+            aria-label="Choose color theme"
+            title={`Color theme: ${activeOption.label}`}
+            onChange={(event) => {
+              const selectedOption = options.find((option) => option.value === event.target.value)
+              if (selectedOption) setTheme(selectedOption.value)
+            }}
+            className="absolute inset-0 z-10 size-full cursor-pointer opacity-0"
+          >
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+          <span
+            aria-hidden="true"
+            className={`pointer-events-none inline-flex size-10 items-center justify-center rounded-xl border shadow-sm ${triggerTone}`}
+          >
+            <ActiveIcon size={16} aria-hidden="true" className={variant === 'dark' ? 'text-amber-300' : 'text-blue-600'} />
+          </span>
+        </div>
+      )}
       <button
         ref={triggerRef}
         type="button"
@@ -91,8 +115,8 @@ export function ThemeSelector({
         aria-controls={menuId}
         onClick={() => setOpen((current) => !current)}
         onKeyDown={handleTriggerKeyDown}
-        className={`inline-flex min-h-10 items-center justify-between rounded-xl border py-2 text-[13px] font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-          compactOnMobile ? 'size-10 min-w-10 px-0 sm:h-10 sm:w-28 sm:px-3' : 'min-w-[112px] gap-2.5 px-3'
+        className={`${compactOnMobile ? 'hidden sm:inline-flex' : 'inline-flex'} min-h-10 items-center justify-between rounded-xl border py-2 text-[13px] font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+          compactOnMobile ? 'size-10 min-w-10 px-0 sm:h-10 sm:w-28 sm:px-3' : 'min-w-28 gap-2.5 px-3'
         } ${triggerTone}`}
       >
         <span className={`inline-flex items-center gap-2.5 ${compactOnMobile ? 'mx-auto sm:mx-0' : ''}`}>
