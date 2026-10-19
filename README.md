@@ -2,7 +2,9 @@
 
 ## Account registration
 
-New sign-ups require a display name and phone number. Both are saved as Supabase Auth user metadata (`display_name` and `phone`); they are not stored in the household or appliances tables.
+New sign-ups require a display name, phone number, and home address. Philippine local phone numbers such as `09972547665` are normalized to `+639972547665`; common spaces, parentheses, dots, and hyphens are accepted. The values are included in Supabase Auth metadata and copied into the user's row in `public.profiles`. The profile table has row-level security so signed-in users can read only their own profile.
+
+After deploying this change, run the updated `supabase/schema.sql` in the Supabase SQL Editor. It creates the profile table and signup trigger and backfills metadata for existing users. If an existing account has no profile metadata, update its profile through a trusted admin process; users should not create duplicate accounts just to fill missing details.
 
 ## Progressive Web App
 

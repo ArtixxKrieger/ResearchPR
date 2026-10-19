@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-type InstallPlatform = 'apple-mobile' | 'apple-desktop' | 'chromium' | null
+type InstallPlatform = 'apple-mobile' | 'apple-desktop' | null
 
 export function PwaInstallButton({
   dark = false,
@@ -26,33 +26,42 @@ export function PwaInstallButton({
   const [status, setStatus] = useState<string | null>(null)
   const [installPlatform, setInstallPlatform] = useState<InstallPlatform>(null)
   const [showInstallInstructions, setShowInstallInstructions] = useState(false)
+  const [installed, setInstalled] = useState(false)
 
   useEffect(() => {
     const userAgent = navigator.userAgent
+    const standaloneMode = window.matchMedia('(display-mode: standalone)')
     const isAppleMobile = /iPhone|iPad|iPod/.test(userAgent)
       || (userAgent.includes('Mac') && navigator.maxTouchPoints > 1)
     const isMacSafari = userAgent.includes('Mac')
       && /Safari/.test(userAgent)
       && !/Chrome|Chromium|Edg|OPR/.test(userAgent)
-    const isChromium = /Chrome|Chromium|Edg|OPR/.test(userAgent)
 
+    setInstalled(standaloneMode.matches || ('standalone' in navigator && Boolean(navigator.standalone)))
     if (isAppleMobile) setInstallPlatform('apple-mobile')
     else if (isMacSafari) setInstallPlatform('apple-desktop')
-    else if (isChromium) setInstallPlatform('chromium')
 
     function captureInstallPrompt(event: InstallPromptEvent) {
       event.preventDefault()
+      setInstalled(false)
       setInstallPrompt(event)
     }
 
     function handleAppInstalled() {
       setInstallPrompt(null)
+      setInstalled(true)
       setStatus('App installed.')
     }
 
+    function handleDisplayModeChange(event: MediaQueryListEvent) {
+      setInstalled(event.matches)
+    }
+
+    standaloneMode.addEventListener('change', handleDisplayModeChange)
     window.addEventListener('beforeinstallprompt', captureInstallPrompt)
     window.addEventListener('appinstalled', handleAppInstalled)
     return () => {
+      standaloneMode.removeEventListener('change', handleDisplayModeChange)
       window.removeEventListener('beforeinstallprompt', captureInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
     }
@@ -79,22 +88,22 @@ export function PwaInstallButton({
     }
   }
 
+  if (installed) return null
   if (!installPrompt && !installPlatform && !status) return null
 
   const installInstructions = installPlatform === 'apple-mobile'
     ? {
         title: 'Add this app to your Home Screen',
-        steps: ['Open this page in Safari and tap Share.', 'Choose “Add to Home Screen”.', 'Tap “Add” to finish.'],
+        description: 'Safari does not let a website start installation directly. Use the Share menu:',
+        steps: ['Tap Share in Safari.', 'Choose “Add to Home Screen”.', 'Tap “Add” to finish.'],
       }
     : installPlatform === 'apple-desktop'
       ? {
           title: 'Add this app to your Dock',
+          description: 'Safari manages web app installation from its own menu:',
           steps: ['Open this page in Safari.', 'From the menu bar, choose File, then Add to Dock.', 'Confirm the app name and choose Add.'],
         }
-      : {
-          title: 'Install from your browser',
-          steps: ['Open the browser menu or address-bar install icon.', 'Choose “Install app” or “Install this site as an app”.', 'Follow the browser prompt to finish.'],
-        }
+      : null
 
   return (
     <div className="relative shrink-0">
@@ -105,7 +114,16 @@ export function PwaInstallButton({
           disabled={installing}
           aria-expanded={installPlatform && !installPrompt ? showInstallInstructions : undefined}
           aria-controls={installPlatform && !installPrompt ? 'pwa-install-instructions' : undefined}
-          aria-label={installing ? 'Opening install prompt' : 'Install app'}
+          aria-label={installPlatform === 'apple-mobile' && !installPrompt
+            ? 'Add app to Home Screen'
+            : installPlatform === 'apple-desktop' && !installPrompt
+              ? 'Add app to Dock'
+              : installing ? 'Opening install prompt' : 'Install app'}
+          title={installPlatform === 'apple-mobile' && !installPrompt
+            ? 'Add to Home Screen'
+            : installPlatform === 'apple-desktop' && !installPrompt
+              ? 'Add to Dock'
+              : 'Install app'}
           className={`inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border py-2 text-xs font-semibold transition disabled:opacity-60 ${
             compactOnMobile ? 'size-10 px-0 sm:size-auto sm:px-3' : 'px-3'
           } ${
@@ -116,11 +134,15 @@ export function PwaInstallButton({
         >
           <Download size={15} aria-hidden="true" />
           <span className={compactOnMobile ? 'sr-only sm:not-sr-only' : undefined}>
-            {installing ? 'Opening…' : 'Install app'}
+            {installing ? 'Opening…' : installPlatform === 'apple-mobile' && !installPrompt
+              ? 'Add to Home Screen'
+              : installPlatform === 'apple-desktop' && !installPrompt
+                ? 'Add to Dock'
+                : 'Install app'}
           </span>
         </button>
       )}
-      {showInstallInstructions && installPlatform && !installPrompt && (
+      {showInstallInstructions && installInstructions && !installPrompt && (
         <div
           id="pwa-install-instructions"
           role="dialog"
@@ -130,6 +152,7 @@ export function PwaInstallButton({
           }`}
         >
           <p className="font-semibold">{installInstructions.title}</p>
+          <p className="mt-1.5 leading-5 opacity-80">{installInstructions.description}</p>
           <ol className="mt-2 list-decimal space-y-1 pl-4 leading-5">
             {installInstructions.steps.map((step) => <li key={step}>{step}</li>)}
           </ol>

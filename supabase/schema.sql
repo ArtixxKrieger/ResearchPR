@@ -29,6 +29,68 @@ create table if not exists public.appliances (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  display_name text not null default '',
+  phone text not null default '',
+  home_address text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.profiles
+  add column if not exists display_name text not null default '',
+  add column if not exists phone text not null default '',
+  add column if not exists home_address text not null default '',
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now();
+
+alter table public.profiles enable row level security;
+
+drop policy if exists "profiles_select_own" on public.profiles;
+create policy "profiles_select_own"
+  on public.profiles for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+revoke all on public.profiles from anon, public;
+grant select on public.profiles to authenticated;
+
+create or replace function public.create_profile_for_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.profiles (user_id, display_name, phone, home_address)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data ->> 'display_name', ''),
+    coalesce(new.raw_user_meta_data ->> 'phone', ''),
+    coalesce(new.raw_user_meta_data ->> 'home_address', '')
+  )
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
+
+revoke all on function public.create_profile_for_new_auth_user() from public, anon, authenticated;
+
+drop trigger if exists on_auth_user_created_profile on auth.users;
+create trigger on_auth_user_created_profile
+  after insert on auth.users
+  for each row execute function public.create_profile_for_new_auth_user();
+
+-- Backfill accounts created before the profile trigger was installed.
+insert into public.profiles (user_id, display_name, phone, home_address)
+select
+  users.id,
+  coalesce(users.raw_user_meta_data ->> 'display_name', ''),
+  coalesce(users.raw_user_meta_data ->> 'phone', ''),
+  coalesce(users.raw_user_meta_data ->> 'home_address', '')
+from auth.users as users
+on conflict (user_id) do nothing;
+
 -- Add ownership to an existing prototype table without claiming its old rows.
 alter table public.households
   add column if not exists owner_id uuid references auth.users(id) on delete cascade;

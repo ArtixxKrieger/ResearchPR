@@ -69,8 +69,8 @@ export function AppLayout() {
             <div className="hidden min-w-0 max-w-48 truncate text-right sm:block">
               <p className="text-xs font-semibold text-blue-200">{user?.email}</p>
             </div>
-            <ThemeSelector variant="dark" />
-            <PwaInstallButton dark />
+            <ThemeSelector variant="dark" compactOnMobile />
+            <PwaInstallButton dark compactOnMobile />
             <button type="button" onClick={() => void handleSignOut()} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-white/20 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10">
               <LogOut size={14} /> Sign out
             </button>

@@ -34,7 +34,7 @@ export function LandingPage() {
           <a href="#example" className="transition hover:text-blue-950">Try an example</a>
         </nav>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <ThemeSelector />
+          <ThemeSelector compactOnMobile />
           <PwaInstallButton compactOnMobile />
           <Link to="/login" className="inline-flex items-center gap-1.5 rounded-xl bg-blue-950 px-3.5 py-2.5 text-xs font-bold text-white transition hover:bg-blue-800 sm:px-4">
             Sign in <ArrowRight size={14} />

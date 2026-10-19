@@ -13,7 +13,13 @@ const options: Array<{
   { value: 'dark', label: 'Dark', description: 'Low-light appearance', icon: Moon },
 ]
 
-export function ThemeSelector({ variant = 'light' }: { variant?: 'light' | 'dark' }) {
+export function ThemeSelector({
+  variant = 'light',
+  compactOnMobile = false,
+}: {
+  variant?: 'light' | 'dark'
+  compactOnMobile?: boolean
+}) {
   const { theme, setTheme } = useTheme()
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -85,13 +91,19 @@ export function ThemeSelector({ variant = 'light' }: { variant?: 'light' | 'dark
         aria-controls={menuId}
         onClick={() => setOpen((current) => !current)}
         onKeyDown={handleTriggerKeyDown}
-        className={`inline-flex min-h-10 min-w-[112px] items-center justify-between gap-2.5 rounded-xl border px-3 py-2 text-[13px] font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${triggerTone}`}
+        className={`inline-flex min-h-10 items-center justify-between rounded-xl border py-2 text-[13px] font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+          compactOnMobile ? 'size-10 min-w-10 px-0 sm:h-10 sm:w-28 sm:px-3' : 'min-w-[112px] gap-2.5 px-3'
+        } ${triggerTone}`}
       >
-        <span className="inline-flex items-center gap-2.5">
+        <span className={`inline-flex items-center gap-2.5 ${compactOnMobile ? 'mx-auto sm:mx-0' : ''}`}>
           <ActiveIcon size={16} aria-hidden="true" className={variant === 'dark' ? 'text-amber-300' : 'text-blue-600'} />
-          <span>{activeOption.label}</span>
+          <span className={compactOnMobile ? 'sr-only sm:not-sr-only' : undefined}>{activeOption.label}</span>
         </span>
-        <ChevronDown size={14} aria-hidden="true" className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          size={14}
+          aria-hidden="true"
+          className={`transition-transform ${compactOnMobile ? 'hidden sm:block' : ''} ${open ? 'rotate-180' : ''}`}
+        />
       </button>
 
       {open && (

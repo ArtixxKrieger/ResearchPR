@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { ArrowRight, Bolt, LockKeyhole, Mail, Phone, UserRound } from 'lucide-react'
+import { ArrowRight, Bolt, LockKeyhole, Mail, MapPin, Phone, UserRound } from 'lucide-react'
 import { supabaseConfigError } from '../lib/supabaseClient'
 import { useEnergy } from '../data/EnergyContext'
 import { ThemeSelector } from '../components/ThemeSelector'
@@ -9,11 +9,13 @@ export function AuthPage() {
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
   const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
+  const [homeAddress, setHomeAddress] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [displayNameError, setDisplayNameError] = useState<string | null>(null)
   const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [homeAddressError, setHomeAddressError] = useState<string | null>(null)
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -24,6 +26,7 @@ export function AuthPage() {
     setError(null)
     setDisplayNameError(null)
     setPhoneError(null)
+    setHomeAddressError(null)
     setEmailError(null)
     setPasswordError(null)
     setMessage(null)
@@ -39,11 +42,15 @@ export function AuthPage() {
       if (!normalizedPhone) {
         setPhoneError('Phone number is required.')
       } else if (!/^\+?[\d\s().-]+$/.test(normalizedPhone) || phoneDigits.length < 7 || phoneDigits.length > 15) {
-        setPhoneError('Enter a valid phone number with 7 to 15 digits.')
+        setPhoneError('Enter a valid phone number using 7 to 15 digits. Spaces, +, parentheses, dots, and hyphens are okay.')
       }
+      const normalizedAddress = homeAddress.trim()
+      if (!normalizedAddress) setHomeAddressError('Home address is required.')
+      else if (normalizedAddress.length > 300) setHomeAddressError('Home address must be 300 characters or less.')
       if (!normalizedName || normalizedName.length > 80 || !normalizedPhone
         || !/^\+?[\d\s().-]+$/.test(normalizedPhone)
-        || phoneDigits.length < 7 || phoneDigits.length > 15) return
+        || phoneDigits.length < 7 || phoneDigits.length > 15
+        || !normalizedAddress || normalizedAddress.length > 300) return
     }
     const normalizedEmail = email.trim()
     if (!normalizedEmail) {
@@ -65,11 +72,16 @@ export function AuthPage() {
         await signIn(normalizedEmail, password)
       } else {
         const normalizedPhone = phone.trim()
+        const digits = normalizedPhone.replace(/\D/g, '')
+        const storedPhone = digits.length === 11 && digits.startsWith('0')
+          ? `+63${digits.slice(1)}`
+          : digits.startsWith('63') || normalizedPhone.startsWith('+') ? `+${digits}` : digits
         const needsEmailConfirmation = await signUp(
           normalizedEmail,
           password,
           displayName.trim(),
-          normalizedPhone,
+          storedPhone,
+          homeAddress.trim(),
         )
         if (needsEmailConfirmation) {
           setError('Supabase is still requiring email confirmation. Disable Confirm email in the Supabase Auth settings, then create the account again.')
@@ -178,17 +190,40 @@ export function AuthPage() {
                       type="tel"
                       autoComplete="tel"
                       required
+                      maxLength={30}
                       aria-invalid={Boolean(phoneError)}
                       aria-describedby={phoneError ? 'auth-phone-error' : 'auth-phone-hint'}
                       value={phone}
                       onChange={(event) => { setPhone(event.target.value); setPhoneError(null) }}
-                      placeholder="+63 9XX XXX XXXX"
+                      placeholder="09972547665 or +63 997 254 7665"
                       className={`w-full rounded-xl border bg-white py-2.5 pl-9 pr-3 text-sm text-blue-950 outline-none focus:ring-4 focus:ring-blue-100 ${phoneError ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100' : 'border-blue-200 focus:border-blue-500'}`}
                     />
                   </span>
                   {phoneError
                     ? <span id="auth-phone-error" role="alert" className="mt-1 block text-xs text-rose-600">{phoneError}</span>
                     : <span id="auth-phone-hint" className="mt-1 block text-xs text-blue-400">Include your country code if available.</span>}
+                </label>
+                <label htmlFor="auth-home-address" className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-blue-800">Home address</span>
+                  <span className="relative block">
+                    <MapPin size={16} className="pointer-events-none absolute left-3 top-3 text-blue-400" />
+                    <textarea
+                      id="auth-home-address"
+                      autoComplete="street-address"
+                      required
+                      maxLength={300}
+                      rows={2}
+                      aria-invalid={Boolean(homeAddressError)}
+                      aria-describedby={homeAddressError ? 'auth-home-address-error' : 'auth-home-address-hint'}
+                      value={homeAddress}
+                      onChange={(event) => { setHomeAddress(event.target.value); setHomeAddressError(null) }}
+                      placeholder="House number, street, subdivision, barangay, city"
+                      className={`w-full resize-y rounded-xl border bg-white py-2.5 pl-9 pr-3 text-sm text-blue-950 outline-none focus:ring-4 focus:ring-blue-100 ${homeAddressError ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100' : 'border-blue-200 focus:border-blue-500'}`}
+                    />
+                  </span>
+                  {homeAddressError
+                    ? <span id="auth-home-address-error" role="alert" className="mt-1 block text-xs text-rose-600">{homeAddressError}</span>
+                    : <span id="auth-home-address-hint" className="mt-1 block text-xs text-blue-400">Used for this household profile. Maximum 300 characters.</span>}
                 </label>
               </>
             )}
@@ -222,6 +257,7 @@ export function AuthPage() {
                 setError(null)
                 setDisplayNameError(null)
                 setPhoneError(null)
+                setHomeAddressError(null)
                 setEmailError(null)
                 setPasswordError(null)
                 setMessage(null)
