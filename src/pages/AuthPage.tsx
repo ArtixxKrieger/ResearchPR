@@ -195,7 +195,7 @@ export function AuthPage() {
                       aria-describedby={phoneError ? 'auth-phone-error' : 'auth-phone-hint'}
                       value={phone}
                       onChange={(event) => { setPhone(event.target.value); setPhoneError(null) }}
-                      placeholder="09972547665 or +63 997 254 7665"
+                      placeholder="Enter your phone number"
                       className={`w-full rounded-xl border bg-white py-2.5 pl-9 pr-3 text-sm text-blue-950 outline-none focus:ring-4 focus:ring-blue-100 ${phoneError ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100' : 'border-blue-200 focus:border-blue-500'}`}
                     />
                   </span>
