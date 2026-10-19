@@ -14,8 +14,10 @@ export function PageHeading({
   return (
     <div className="mb-6 flex min-w-0 flex-col justify-between gap-4 sm:mb-7 sm:flex-row sm:items-end">
       <div className="min-w-0">
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-blue-500">{eyebrow}</p>
-        <h1 className="text-2xl font-bold tracking-tight text-blue-950 sm:text-3xl">{title}</h1>
+        <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-500">
+          <span className="h-px w-5 bg-amber-400" />{eyebrow}
+        </p>
+        <h1 className="font-serif text-3xl font-semibold leading-tight tracking-tight text-blue-950 sm:text-4xl">{title}</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-600">{description}</p>
       </div>
       {action && <div className="min-w-0 w-full sm:w-auto">{action}</div>}
@@ -37,10 +39,10 @@ export function SectionCard({
   action?: ReactNode
 }) {
   return (
-    <section className={`min-w-0 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm shadow-blue-100/60 sm:p-6 ${className}`}>
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-bold text-blue-950">{title}</h2>
+    <section className={`min-w-0 rounded-2xl border border-blue-100/80 bg-white p-4 shadow-[0_8px_30px_rgba(33,73,126,0.045)] sm:p-6 ${className}`}>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-blue-50 pb-4">
+        <div className="min-w-0">
+          <h2 className="font-serif text-lg font-semibold text-blue-950">{title}</h2>
           {description && <p className="mt-1 text-sm text-blue-500">{description}</p>}
         </div>
         {action}

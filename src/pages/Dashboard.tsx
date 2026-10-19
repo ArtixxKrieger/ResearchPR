@@ -166,6 +166,14 @@ export function Dashboard() {
     (current, item) => !current || calculateApplianceKwh(item) > calculateApplianceKwh(current) ? item : current,
     null,
   )
+  const setupStep = !household ? 1 : appliances.length === 0 ? 2 : 3
+  const nextSetupHref = setupStep === 1 ? '#actual-bill' : setupStep === 2 ? '#appliance-library' : '/optimization'
+  const nextSetupLabel = setupStep === 1 ? 'Add your bill details' : setupStep === 2 ? 'Choose your appliances' : 'Explore an energy plan'
+  const setupSteps = [
+    { number: '01', label: 'Your bill', done: Boolean(household) },
+    { number: '02', label: 'Your appliances', done: appliances.length > 0 },
+    { number: '03', label: 'Your plan', done: false },
+  ]
 
   async function handleBillSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -285,17 +293,71 @@ export function Dashboard() {
     <>
       <PageHeading
         eyebrow="Household overview"
-        title="Energy dashboard"
-        description="Record your actual billed information separately from appliance-based estimates."
-        action={
-          <Link to="/optimization" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 sm:w-auto">
-            Explore projections <ArrowUpRight size={16} />
-          </Link>
-        }
+        title="Your home, at a glance."
+        description="A practical picture of where your household electricity goes."
       />
 
-      <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
-        <strong>Illustrative estimates.</strong> Appliance costs are based on the entered usage schedule and rate; they are not actual utility charges.
+      <section className="energy-hero mb-6 overflow-hidden rounded-[1.75rem] bg-blue-950 p-5 text-white sm:p-7 lg:p-8">
+        <div className="grid items-end gap-7 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
+          <div className="relative z-10">
+            <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300">
+              <span className="size-1.5 animate-pulse rounded-full bg-amber-300" />
+              Your energy, made visible
+            </p>
+            <h2 className="mt-4 max-w-xl font-serif text-3xl leading-tight tracking-tight text-white sm:text-4xl">
+              Small details.<br /><span className="text-amber-300">Smarter choices.</span>
+            </h2>
+            <p className="mt-3 max-w-lg text-sm leading-6 text-blue-100">
+              {setupStep === 1
+                ? 'Start with the numbers on your latest bill. Then add household appliances to see how your daily routines shape energy use.'
+                : setupStep === 2
+                  ? 'Your bill is recorded. Add the appliances you use most to build a useful monthly estimate.'
+                  : 'Your household profile is taking shape. Explore a schedule change and see its estimated impact before you make it.'}
+            </p>
+            <div className="mt-6 grid max-w-lg grid-cols-3 gap-2">
+              {setupSteps.map((step, index) => (
+                <div key={step.number} className="min-w-0">
+                  <div className={`mb-2 h-1 rounded-full ${step.done || setupStep === index + 1 ? 'bg-amber-300' : 'bg-white/20'}`} />
+                  <p className={`text-[10px] font-bold uppercase tracking-wider ${step.done || setupStep === index + 1 ? 'text-white' : 'text-blue-300'}`}>
+                    {step.done ? '✓ ' : `${step.number} `}{step.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {setupStep === 3 ? (
+              <Link to={nextSetupHref} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-3 text-sm font-bold text-blue-950 transition hover:bg-amber-200">
+                {nextSetupLabel} <ArrowUpRight size={16} />
+              </Link>
+            ) : (
+              <a href={nextSetupHref} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-3 text-sm font-bold text-blue-950 transition hover:bg-amber-200">
+                {nextSetupLabel} <ArrowUpRight size={16} />
+              </a>
+            )}
+          </div>
+          <div className="energy-orbit relative min-h-44 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06] p-4 sm:p-5">
+            <div className="pointer-events-none absolute -right-12 -top-16 size-56 rounded-full border border-amber-300/15" />
+            <div className="pointer-events-none absolute -right-5 -top-9 size-40 rounded-full border border-amber-300/20" />
+            <div className="pointer-events-none absolute right-8 top-7 size-2 rounded-full bg-amber-300 shadow-[0_0_18px_rgba(252,211,77,0.8)]" />
+            <div className="relative">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-blue-300">A good place to begin</p>
+              <p className="mt-3 max-w-xs font-serif text-2xl leading-tight text-white">
+                {setupStep === 1 ? 'One bill. One useful baseline.' : setupStep === 2 ? 'Build your home’s energy profile.' : `${appliances.length} ${appliances.length === 1 ? 'appliance' : 'appliances'} in your energy profile.`}
+              </p>
+              <p className="mt-3 max-w-sm text-xs leading-5 text-blue-200">
+                Your billed electricity and appliance estimates stay separate, so you can compare without confusing a projection for a bill.
+              </p>
+            </div>
+            <div className="relative mt-5 flex items-center gap-2 text-[10px] font-semibold text-blue-200">
+              <span className="inline-block size-2 rounded-sm bg-amber-300" /> Actual billed info
+              <span className="ml-2 inline-block size-2 rounded-sm bg-blue-400" /> Appliance estimate
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="mb-6 flex items-start gap-3 border-l-2 border-amber-400 bg-amber-50/70 px-4 py-3 text-xs leading-5 text-amber-950">
+        <span className="mt-1 size-2 shrink-0 rounded-full bg-amber-400" />
+        <p><strong>Illustrative estimates.</strong> Appliance costs use your entered schedule and rate; they are not actual utility charges.</p>
       </div>
 
       {formError && <div role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{formError}</div>}
@@ -308,8 +370,8 @@ export function Dashboard() {
       </div>
 
       <div className="grid items-start gap-5 xl:grid-cols-[0.85fr_1.15fr]">
-        <SectionCard title="Actual billed info" description="Transcribe your monthly utility bill; these are not appliance estimates.">
-          <form onSubmit={handleBillSubmit} noValidate className="space-y-4">
+        <SectionCard title="The bill" description="Enter the figures from your latest utility bill. These are your actual billed values." className="scroll-mt-6" >
+          <form id="actual-bill" onSubmit={handleBillSubmit} noValidate className="scroll-mt-6 space-y-4">
             <Field
               id="monthly-consumption"
               label="Monthly consumption (kWh)"
@@ -358,16 +420,17 @@ export function Dashboard() {
         </SectionCard>
 
         <SectionCard
-          title="Appliance manager"
-          description="Estimated costs use monthly appliance energy × the entered rate."
+          title="The appliances"
+          description="Pick the common items in your home. You can adjust every estimate later."
           action={<span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-600">{appliances.length} {appliances.length === 1 ? 'item' : 'items'}</span>}
+          className="scroll-mt-6"
         >
           {!household && (
             <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-700">
               Save actual billed info first to create a household record and enable appliance saving.
             </div>
           )}
-          <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+          <div id="appliance-library" className="mb-5 scroll-mt-6 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
             <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
               <div>
                 <h3 className="text-sm font-bold text-blue-900">Quick add from the appliance library</h3>
