@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { ArrowDownRight, ArrowUpRight, Bolt, Check, Pencil, Plus, Trash2, Wallet, Zap } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Bolt, Check, Pencil, Plus, Search, Trash2, Wallet, Zap } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useEnergy } from '../data/EnergyContext'
 import { calculateApplianceKwh, formatNumber, formatPeso } from '../lib/calculations'
@@ -31,6 +31,31 @@ const appliancePresets: Array<{ name: string; wattage: number; hoursPerDay: numb
   { name: 'Refrigerator', wattage: 150, hoursPerDay: 24 },
   { name: 'Rice cooker', wattage: 700, hoursPerDay: 1 },
   { name: 'Air conditioner', wattage: 1000, hoursPerDay: 8 },
+]
+
+const applianceLibrary: Array<{ name: string; category: string; wattage: number; hoursPerDay: number; daysPerMonth: number }> = [
+  { name: 'LED bulb', category: 'Lighting', wattage: 10, hoursPerDay: 6, daysPerMonth: 30 },
+  { name: 'Fluorescent light', category: 'Lighting', wattage: 40, hoursPerDay: 6, daysPerMonth: 30 },
+  { name: 'Ceiling fan', category: 'Cooling', wattage: 75, hoursPerDay: 8, daysPerMonth: 30 },
+  { name: 'Stand fan', category: 'Cooling', wattage: 60, hoursPerDay: 8, daysPerMonth: 30 },
+  { name: 'Window air conditioner (1 HP)', category: 'Cooling', wattage: 746, hoursPerDay: 8, daysPerMonth: 30 },
+  { name: 'Window air conditioner (1.5 HP)', category: 'Cooling', wattage: 1119, hoursPerDay: 8, daysPerMonth: 30 },
+  { name: 'Refrigerator', category: 'Kitchen', wattage: 150, hoursPerDay: 8, daysPerMonth: 30 },
+  { name: 'Rice cooker', category: 'Kitchen', wattage: 700, hoursPerDay: 1, daysPerMonth: 30 },
+  { name: 'Electric kettle', category: 'Kitchen', wattage: 1500, hoursPerDay: 0.3, daysPerMonth: 30 },
+  { name: 'Microwave oven', category: 'Kitchen', wattage: 1200, hoursPerDay: 0.3, daysPerMonth: 20 },
+  { name: 'Induction cooker', category: 'Kitchen', wattage: 1800, hoursPerDay: 1, daysPerMonth: 30 },
+  { name: 'Water dispenser', category: 'Kitchen', wattage: 500, hoursPerDay: 4, daysPerMonth: 30 },
+  { name: 'Television', category: 'Electronics', wattage: 100, hoursPerDay: 5, daysPerMonth: 30 },
+  { name: 'Laptop', category: 'Electronics', wattage: 65, hoursPerDay: 6, daysPerMonth: 25 },
+  { name: 'Desktop computer', category: 'Electronics', wattage: 200, hoursPerDay: 6, daysPerMonth: 25 },
+  { name: 'Wi-Fi router', category: 'Electronics', wattage: 12, hoursPerDay: 24, daysPerMonth: 30 },
+  { name: 'Phone charger', category: 'Electronics', wattage: 10, hoursPerDay: 3, daysPerMonth: 30 },
+  { name: 'Washing machine', category: 'Laundry', wattage: 500, hoursPerDay: 1, daysPerMonth: 12 },
+  { name: 'Clothes iron', category: 'Laundry', wattage: 1000, hoursPerDay: 0.5, daysPerMonth: 12 },
+  { name: 'Water pump', category: 'Other', wattage: 750, hoursPerDay: 1, daysPerMonth: 30 },
+  { name: 'Vacuum cleaner', category: 'Other', wattage: 1000, hoursPerDay: 0.3, daysPerMonth: 8 },
+  { name: 'Hair dryer', category: 'Personal care', wattage: 1200, hoursPerDay: 0.2, daysPerMonth: 20 },
 ]
 
 function validateNumber(value: string, label: string, min: number, max?: number): string | undefined {
@@ -111,6 +136,16 @@ export function Dashboard() {
   const [applianceSaving, setApplianceSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [selectedPreset, setSelectedPreset] = useState('')
+  const [librarySearch, setLibrarySearch] = useState('')
+  const [libraryQuantities, setLibraryQuantities] = useState<Record<string, string>>({})
+  const [librarySaving, setLibrarySaving] = useState(false)
+  const [libraryResult, setLibraryResult] = useState<string | null>(null)
+  const [libraryError, setLibraryError] = useState<string | null>(null)
+
+  const filteredLibrary = applianceLibrary.filter((item) =>
+    `${item.name} ${item.category}`.toLowerCase().includes(librarySearch.trim().toLowerCase()),
+  )
+  const selectedLibraryItems = applianceLibrary.filter((item) => libraryQuantities[item.name] !== undefined)
 
   useEffect(() => {
     if (household) {
@@ -192,6 +227,45 @@ export function Dashboard() {
     } finally {
       setApplianceSaving(false)
     }
+  }
+
+  async function addLibraryAppliances() {
+    if (!household || selectedLibraryItems.length === 0) return
+    setLibrarySaving(true)
+    setLibraryResult(null)
+    setLibraryError(null)
+    setFormError(null)
+    const failed: string[] = []
+    let added = 0
+
+    for (const item of selectedLibraryItems) {
+      const quantity = Number(libraryQuantities[item.name])
+      if (!Number.isInteger(quantity) || quantity < 1) {
+        failed.push(`${item.name}: enter a quantity of at least 1.`)
+        continue
+      }
+      try {
+        await saveAppliance({
+          name: item.name,
+          wattage: item.wattage,
+          quantity,
+          hoursPerDay: item.hoursPerDay,
+          daysPerMonth: item.daysPerMonth,
+        })
+        added += 1
+        setLibraryQuantities((current) => {
+          const next = { ...current }
+          delete next[item.name]
+          return next
+        })
+      } catch (cause) {
+        failed.push(`${item.name}: ${cause instanceof Error ? cause.message : 'could not save.'}`)
+      }
+    }
+
+    if (added > 0) setLibraryResult(`Added ${added} ${added === 1 ? 'appliance' : 'appliances'}. You can edit their details below.`)
+    if (failed.length > 0) setLibraryError(`Some items were not added: ${failed.join(' ')}`)
+    setLibrarySaving(false)
   }
 
   async function handleDelete(id: string) {
@@ -293,51 +367,141 @@ export function Dashboard() {
               Save actual billed info first to create a household record and enable appliance saving.
             </div>
           )}
-          <form onSubmit={handleApplianceSubmit} noValidate className="mb-5 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-            <p className="mb-3 text-xs font-bold text-blue-800">{editingId ? 'Edit appliance' : 'Add an appliance'}</p>
-            {!editingId && (
-              <label htmlFor="appliance-preset" className="mb-3 block">
-                <span className="mb-1.5 block text-xs font-semibold text-blue-800">Quick start with a typical appliance</span>
-                <select
-                  id="appliance-preset"
-                  value={selectedPreset}
-                  onChange={(event) => {
-                    const preset = appliancePresets.find((item) => item.name === event.target.value)
-                    setSelectedPreset(event.target.value)
-                    if (preset) {
-                      setApplianceForm({
-                        ...blankAppliance,
-                        name: preset.name,
-                        wattage: String(preset.wattage),
-                        hoursPerDay: String(preset.hoursPerDay),
-                      })
-                      setApplianceErrors({})
-                    }
-                  }}
-                  className="w-full rounded-xl border border-blue-200 bg-white px-3.5 py-2.5 text-sm text-blue-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                >
-                  <option value="">Choose a preset to prefill values…</option>
-                  {appliancePresets.map((preset) => (
-                    <option key={preset.name} value={preset.name}>{preset.name} · {preset.wattage} W · {preset.hoursPerDay} h/day</option>
-                  ))}
-                </select>
-                <span className="mt-1 block text-xs leading-5 text-blue-500">Presets are illustrative starting points. Check the appliance label and change the wattage and usage to match your home.</span>
-              </label>
-            )}
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field id="appliance-name" label="Appliance name" placeholder="e.g. Electric fan" value={applianceForm.name} error={applianceErrors.name} onChange={(event) => setApplianceForm({ ...applianceForm, name: event.target.value })} />
-              <Field id="appliance-wattage" label="Wattage (W)" type="number" min="0.01" step="0.01" placeholder="e.g. 60" value={applianceForm.wattage} error={applianceErrors.wattage} onChange={(event) => setApplianceForm({ ...applianceForm, wattage: event.target.value })} />
-              <Field id="appliance-quantity" label="Quantity" type="number" min="1" step="1" value={applianceForm.quantity} error={applianceErrors.quantity} onChange={(event) => setApplianceForm({ ...applianceForm, quantity: event.target.value })} />
-              <Field id="appliance-hours" label="Hours per day" type="number" min="0" max="24" step="0.25" placeholder="e.g. 8" value={applianceForm.hoursPerDay} error={applianceErrors.hoursPerDay} onChange={(event) => setApplianceForm({ ...applianceForm, hoursPerDay: event.target.value })} />
-              <Field id="appliance-days" label="Days per month" type="number" min="0" max="31" step="1" value={applianceForm.daysPerMonth} error={applianceErrors.daysPerMonth} onChange={(event) => setApplianceForm({ ...applianceForm, daysPerMonth: event.target.value })} />
+          <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+            <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold text-blue-900">Quick add from the appliance library</h3>
+                <p className="mt-1 text-xs leading-5 text-blue-600">Choose common items and quantities. Values are illustrative starting points—check your appliance label and actual use.</p>
+              </div>
+              <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-blue-600">{selectedLibraryItems.length} selected</span>
             </div>
-            <div className="mt-4 flex flex-wrap justify-end gap-2">
-              {editingId && <button type="button" onClick={cancelEdit} className="rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50">Cancel</button>}
-              <button type="submit" disabled={!household || applianceSaving} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50">
-                <Plus size={15} /> {applianceSaving ? 'Saving…' : editingId ? 'Save changes' : 'Add appliance'}
+            <label className="mb-3 flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-2.5 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
+              <Search size={16} className="shrink-0 text-blue-400" />
+              <input
+                type="search"
+                value={librarySearch}
+                onChange={(event) => setLibrarySearch(event.target.value)}
+                placeholder="Search appliances or category"
+                aria-label="Search appliance library"
+                className="min-w-0 flex-1 bg-transparent text-sm text-blue-950 outline-none placeholder:text-blue-300"
+              />
+            </label>
+            <div className="grid max-h-80 gap-2 overflow-y-auto sm:grid-cols-2">
+              {filteredLibrary.map((item) => {
+                const selected = libraryQuantities[item.name] !== undefined
+                const alreadyAdded = appliances.some((appliance) => appliance.name.toLowerCase() === item.name.toLowerCase())
+                return (
+                  <div key={item.name} className={`flex min-w-0 items-center gap-2 rounded-xl border border-blue-100 bg-white p-2.5 ${alreadyAdded ? 'opacity-60' : ''}`}>
+                    <input
+                      id={`library-${item.name}`}
+                      type="checkbox"
+                      checked={selected}
+                      disabled={alreadyAdded || librarySaving}
+                      onChange={(event) => {
+                        setLibraryQuantities((current) => {
+                          if (!event.target.checked) {
+                            const next = { ...current }
+                            delete next[item.name]
+                            return next
+                          }
+                          return { ...current, [item.name]: '1' }
+                        })
+                        setLibraryError(null)
+                      }}
+                      className="size-4 shrink-0 accent-blue-700"
+                    />
+                    <label htmlFor={`library-${item.name}`} className="min-w-0 flex-1 cursor-pointer">
+                      <span className="block truncate text-xs font-semibold text-blue-900">{item.name}</span>
+                      <span className="block text-[11px] text-blue-500">{alreadyAdded ? 'Already in your list · use Edit to update' : `${item.category} · ${item.wattage} W · ${formatNumber(item.hoursPerDay)} h/day`}</span>
+                    </label>
+                    {selected && (
+                      <label className="flex shrink-0 items-center gap-1 text-[11px] text-blue-600">
+                        Qty
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          disabled={librarySaving}
+                          value={libraryQuantities[item.name]}
+                          onChange={(event) => setLibraryQuantities((current) => ({ ...current, [item.name]: event.target.value }))}
+                          aria-label={`${item.name} quantity`}
+                          className="w-14 rounded-lg border border-blue-200 px-1.5 py-1 text-center text-xs text-blue-950 outline-none focus:border-blue-500"
+                        />
+                      </label>
+                    )}
+                  </div>
+                )
+              })}
+              {filteredLibrary.length === 0 && <p className="rounded-xl border border-dashed border-blue-200 p-4 text-center text-xs text-blue-500 sm:col-span-2">No appliances match that search.</p>}
+            </div>
+            {(libraryResult || libraryError) && (
+              <div className="mt-3 space-y-1" aria-live="polite">
+                {libraryResult && <p role="status" className="text-xs font-semibold text-emerald-700">{libraryResult}</p>}
+                {libraryError && <p role="alert" className="text-xs text-rose-700">{libraryError}</p>}
+              </div>
+            )}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] leading-5 text-blue-500">Usage hours are starting estimates and can be adjusted after adding.</p>
+              <button
+                type="button"
+                onClick={() => void addLibraryAppliances()}
+                disabled={!household || selectedLibraryItems.length === 0 || librarySaving}
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-blue-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              >
+                <Plus size={15} /> {librarySaving ? 'Adding appliances…' : `Add ${selectedLibraryItems.length} selected`}
               </button>
             </div>
-          </form>
+          </div>
+
+          <details open={Boolean(editingId)} className="mb-5 rounded-xl border border-blue-100 bg-white">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-blue-800">
+              {editingId ? 'Edit appliance details' : 'Add a custom appliance instead'}
+            </summary>
+            <form onSubmit={handleApplianceSubmit} noValidate className="border-t border-blue-100 bg-blue-50/60 p-4">
+              {!editingId && (
+                <label htmlFor="appliance-preset" className="mb-3 block">
+                  <span className="mb-1.5 block text-xs font-semibold text-blue-800">Quick start with a typical appliance</span>
+                  <select
+                    id="appliance-preset"
+                    value={selectedPreset}
+                    onChange={(event) => {
+                      const preset = appliancePresets.find((item) => item.name === event.target.value)
+                      setSelectedPreset(event.target.value)
+                      if (preset) {
+                        setApplianceForm({
+                          ...blankAppliance,
+                          name: preset.name,
+                          wattage: String(preset.wattage),
+                          hoursPerDay: String(preset.hoursPerDay),
+                        })
+                        setApplianceErrors({})
+                      }
+                    }}
+                    className="w-full rounded-xl border border-blue-200 bg-white px-3.5 py-2.5 text-sm text-blue-950 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  >
+                    <option value="">Choose a preset to prefill values…</option>
+                    {appliancePresets.map((preset) => (
+                      <option key={preset.name} value={preset.name}>{preset.name} · {preset.wattage} W · {preset.hoursPerDay} h/day</option>
+                    ))}
+                  </select>
+                  <span className="mt-1 block text-xs leading-5 text-blue-500">Presets are illustrative starting points. Check the appliance label and change the wattage and usage to match your home.</span>
+                </label>
+              )}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field id="appliance-name" label="Appliance name" placeholder="e.g. Electric fan" value={applianceForm.name} error={applianceErrors.name} onChange={(event) => setApplianceForm({ ...applianceForm, name: event.target.value })} />
+                <Field id="appliance-wattage" label="Wattage (W)" type="number" min="0.01" step="0.01" placeholder="e.g. 60" value={applianceForm.wattage} error={applianceErrors.wattage} onChange={(event) => setApplianceForm({ ...applianceForm, wattage: event.target.value })} />
+                <Field id="appliance-quantity" label="Quantity" type="number" min="1" step="1" value={applianceForm.quantity} error={applianceErrors.quantity} onChange={(event) => setApplianceForm({ ...applianceForm, quantity: event.target.value })} />
+                <Field id="appliance-hours" label="Hours per day" type="number" min="0" max="24" step="0.25" placeholder="e.g. 8" value={applianceForm.hoursPerDay} error={applianceErrors.hoursPerDay} onChange={(event) => setApplianceForm({ ...applianceForm, hoursPerDay: event.target.value })} />
+                <Field id="appliance-days" label="Days per month" type="number" min="0" max="31" step="1" value={applianceForm.daysPerMonth} error={applianceErrors.daysPerMonth} onChange={(event) => setApplianceForm({ ...applianceForm, daysPerMonth: event.target.value })} />
+              </div>
+              <div className="mt-4 flex flex-wrap justify-end gap-2">
+                {editingId && <button type="button" onClick={cancelEdit} className="rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50">Cancel</button>}
+                <button type="submit" disabled={!household || applianceSaving} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50">
+                  <Plus size={15} /> {applianceSaving ? 'Saving…' : editingId ? 'Save changes' : 'Add custom appliance'}
+                </button>
+              </div>
+            </form>
+          </details>
 
           {appliances.length === 0 ? (
             <EmptyState>No appliances saved yet. Add an appliance above to estimate its monthly energy use.</EmptyState>
