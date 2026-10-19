@@ -121,7 +121,7 @@ function SummaryCard({
 }
 
 export function Dashboard() {
-  const { household, appliances, loading, saveHousehold, saveAppliance, deleteAppliance } = useEnergy()
+  const { user, household, appliances, loading, saveHousehold, saveAppliance, deleteAppliance } = useEnergy()
   const [billForm, setBillForm] = useState<HouseholdForm>({
     monthlyConsumption: '',
     billAmount: '',
@@ -174,6 +174,9 @@ export function Dashboard() {
     { number: '02', label: 'Your appliances', done: appliances.length > 0 },
     { number: '03', label: 'Your plan', done: false },
   ]
+  const displayName = typeof user?.user_metadata?.display_name === 'string'
+    ? user.user_metadata.display_name.trim()
+    : ''
 
   async function handleBillSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -293,7 +296,7 @@ export function Dashboard() {
     <>
       <PageHeading
         eyebrow="Household overview"
-        title="Your home, at a glance."
+        title={displayName ? `Welcome, ${displayName}.` : 'Your home, at a glance.'}
         description="A practical picture of where your household electricity goes."
       />
 
