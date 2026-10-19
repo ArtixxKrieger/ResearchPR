@@ -1,5 +1,9 @@
 # ResearchPR
 
+## Account registration
+
+New sign-ups require a display name and phone number. Both are saved as Supabase Auth user metadata (`display_name` and `phone`); they are not stored in the household or appliances tables.
+
 ## Progressive Web App
 
 Build and deploy the app over HTTPS to enable installation. Supported browsers show an **Install app** action; on iPhone and iPad, use **How to install** and follow the Safari Home Screen steps.

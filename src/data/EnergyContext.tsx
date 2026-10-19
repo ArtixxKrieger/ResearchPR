@@ -57,7 +57,7 @@ interface EnergyContextValue {
   syncOfflineChanges: () => Promise<void>
   resolveOfflineConflict: (id: string, choice: 'local' | 'remote') => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string) => Promise<boolean>
+  signUp: (email: string, password: string, displayName: string, phone: string) => Promise<boolean>
   signOut: () => Promise<void>
   dismissError: () => void
 }
@@ -500,9 +500,23 @@ export function EnergyProvider({ children }: { children: ReactNode }) {
     if (authError) throw authError
   }, [])
 
-  const signUp = useCallback(async (email: string, password: string) => {
+  const signUp = useCallback(async (
+    email: string,
+    password: string,
+    displayName: string,
+    phone: string,
+  ) => {
     if (!supabase) throw new Error(supabaseConfigError ?? 'Supabase is not configured.')
-    const { data, error: authError } = await supabase.auth.signUp({ email, password })
+    const { data, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          display_name: displayName,
+          phone,
+        },
+      },
+    })
     if (authError) throw authError
     return !data.session
   }, [])

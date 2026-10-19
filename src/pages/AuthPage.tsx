@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { ArrowRight, Bolt, LockKeyhole, Mail } from 'lucide-react'
+import { ArrowRight, Bolt, LockKeyhole, Mail, Phone, UserRound } from 'lucide-react'
 import { supabaseConfigError } from '../lib/supabaseClient'
 import { useEnergy } from '../data/EnergyContext'
 import { ThemeSelector } from '../components/ThemeSelector'
@@ -7,9 +7,13 @@ import { ThemeSelector } from '../components/ThemeSelector'
 export function AuthPage() {
   const { signIn, signUp, error: sessionError } = useEnergy()
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
+  const [displayName, setDisplayName] = useState('')
+  const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [displayNameError, setDisplayNameError] = useState<string | null>(null)
+  const [phoneError, setPhoneError] = useState<string | null>(null)
   const [emailError, setEmailError] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -18,9 +22,29 @@ export function AuthPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
+    setDisplayNameError(null)
+    setPhoneError(null)
     setEmailError(null)
     setPasswordError(null)
     setMessage(null)
+    if (mode === 'sign-up') {
+      const normalizedName = displayName.trim()
+      if (!normalizedName) {
+        setDisplayNameError('Display name is required.')
+      } else if (normalizedName.length > 80) {
+        setDisplayNameError('Display name must be 80 characters or less.')
+      }
+      const normalizedPhone = phone.trim()
+      const phoneDigits = normalizedPhone.replace(/\D/g, '')
+      if (!normalizedPhone) {
+        setPhoneError('Phone number is required.')
+      } else if (!/^\+?[\d\s().-]+$/.test(normalizedPhone) || phoneDigits.length < 7 || phoneDigits.length > 15) {
+        setPhoneError('Enter a valid phone number with 7 to 15 digits.')
+      }
+      if (!normalizedName || normalizedName.length > 80 || !normalizedPhone
+        || !/^\+?[\d\s().-]+$/.test(normalizedPhone)
+        || phoneDigits.length < 7 || phoneDigits.length > 15) return
+    }
     const normalizedEmail = email.trim()
     if (!normalizedEmail) {
       setEmailError('Email address is required.')
@@ -40,7 +64,13 @@ export function AuthPage() {
       if (mode === 'sign-in') {
         await signIn(normalizedEmail, password)
       } else {
-        const needsEmailConfirmation = await signUp(normalizedEmail, password)
+        const normalizedPhone = phone.trim()
+        const needsEmailConfirmation = await signUp(
+          normalizedEmail,
+          password,
+          displayName.trim(),
+          normalizedPhone,
+        )
         if (needsEmailConfirmation) {
           setError('Supabase is still requiring email confirmation. Disable Confirm email in the Supabase Auth settings, then create the account again.')
         }
@@ -117,6 +147,51 @@ export function AuthPage() {
           {displayedError && <p role="alert" className="mt-4 text-sm text-rose-700">{displayedError}</p>}
           {message && <p role="status" className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{message}</p>}
           <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4">
+            {mode === 'sign-up' && (
+              <>
+                <label htmlFor="auth-display-name" className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-blue-800">Display name</span>
+                  <span className="relative block">
+                    <UserRound size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
+                    <input
+                      id="auth-display-name"
+                      type="text"
+                      autoComplete="name"
+                      required
+                      maxLength={80}
+                      aria-invalid={Boolean(displayNameError)}
+                      aria-describedby={displayNameError ? 'auth-display-name-error' : undefined}
+                      value={displayName}
+                      onChange={(event) => { setDisplayName(event.target.value); setDisplayNameError(null) }}
+                      placeholder="Your name"
+                      className={`w-full rounded-xl border bg-white py-2.5 pl-9 pr-3 text-sm text-blue-950 outline-none focus:ring-4 focus:ring-blue-100 ${displayNameError ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100' : 'border-blue-200 focus:border-blue-500'}`}
+                    />
+                  </span>
+                  {displayNameError && <span id="auth-display-name-error" role="alert" className="mt-1 block text-xs text-rose-600">{displayNameError}</span>}
+                </label>
+                <label htmlFor="auth-phone" className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-blue-800">Phone number</span>
+                  <span className="relative block">
+                    <Phone size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
+                    <input
+                      id="auth-phone"
+                      type="tel"
+                      autoComplete="tel"
+                      required
+                      aria-invalid={Boolean(phoneError)}
+                      aria-describedby={phoneError ? 'auth-phone-error' : 'auth-phone-hint'}
+                      value={phone}
+                      onChange={(event) => { setPhone(event.target.value); setPhoneError(null) }}
+                      placeholder="+63 9XX XXX XXXX"
+                      className={`w-full rounded-xl border bg-white py-2.5 pl-9 pr-3 text-sm text-blue-950 outline-none focus:ring-4 focus:ring-blue-100 ${phoneError ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100' : 'border-blue-200 focus:border-blue-500'}`}
+                    />
+                  </span>
+                  {phoneError
+                    ? <span id="auth-phone-error" role="alert" className="mt-1 block text-xs text-rose-600">{phoneError}</span>
+                    : <span id="auth-phone-hint" className="mt-1 block text-xs text-blue-400">Include your country code if available.</span>}
+                </label>
+              </>
+            )}
             <label htmlFor="auth-email" className="block">
               <span className="mb-1.5 block text-xs font-semibold text-blue-800">Email address</span>
               <span className="relative block">
@@ -145,6 +220,8 @@ export function AuthPage() {
               onClick={() => {
                 setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')
                 setError(null)
+                setDisplayNameError(null)
+                setPhoneError(null)
                 setEmailError(null)
                 setPasswordError(null)
                 setMessage(null)
