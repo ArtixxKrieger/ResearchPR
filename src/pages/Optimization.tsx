@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { ArrowDown, ArrowRight, Check, Pencil, RotateCcw, Save, Search, SlidersHorizontal, Sparkles, TrendingDown, X } from 'lucide-react'
+import { ArrowDown, ArrowRight, Check, Pencil, RotateCcw, Save, Search, SlidersHorizontal, Sparkles, Timer, TrendingDown, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { EmptyState, Field, LoadingState, PageHeading, SectionCard } from '../components/Ui'
 import { useEnergy } from '../data/EnergyContext'
@@ -46,6 +46,8 @@ export function Optimization() {
   const [savedId, setSavedId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [applianceSearch, setApplianceSearch] = useState('')
+  const [timerOpenId, setTimerOpenId] = useState<string | null>(null)
+  const [timerHours, setTimerHours] = useState<Record<string, string>>({})
   const ranked = useMemo(() => rankAppliances(appliances), [appliances])
   const rate = household?.rate ?? 12
   const projected = useMemo(
@@ -92,7 +94,7 @@ export function Optimization() {
 
       <div className="mb-6 flex items-start gap-3 rounded-xl border border-blue-100 bg-white px-4 py-3 text-xs leading-5 text-blue-600">
         <SlidersHorizontal size={16} className="mt-0.5 shrink-0 text-blue-500" />
-        <p>Adjust the plan to preview energy and cost changes. Use <strong className="text-blue-900">Save proposed hours</strong> on an appliance to make that new schedule your saved usage.</p>
+        <p>Adjust hours or try an auto-off timer to preview energy and cost changes. These are projections only; your saved appliance details stay unchanged and this app cannot switch appliances off.</p>
       </div>
       {actionError && <div role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{actionError}</div>}
 
@@ -143,7 +145,6 @@ export function Optimization() {
               <div className="space-y-5">
                 {visibleProjected.map((appliance) => {
                   const index = ranked.findIndex((item) => item.id === appliance.id)
-                  const changed = appliance.proposedHours !== appliance.hoursPerDay
                   return (
                     <div key={appliance.id} className="rounded-xl border border-blue-100 p-4">
                       <div className="mb-3 flex items-start gap-3">
@@ -195,12 +196,72 @@ export function Optimization() {
                         </label>
                         <span className="text-xs text-blue-500">Projected: <strong className="text-blue-800">{formatNumber(appliance.projectedKwh)} kWh</strong> · {formatPeso(appliance.projectedKwh * rate)}</span>
                       </div>
-                      <div className="mt-2 flex justify-end text-xs">
-                        {changed && <span className={`font-semibold ${appliance.originalKwh >= appliance.projectedKwh ? 'text-emerald-700' : 'text-amber-700'}`}>
-                          {formatNumber(appliance.originalKwh - appliance.projectedKwh)} kWh {appliance.originalKwh >= appliance.projectedKwh ? 'saved' : 'added'}
-                        </span>}
+                      <div className="mt-3 border-t border-blue-50 pt-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const opening = timerOpenId !== appliance.id
+                            setTimerOpenId(opening ? appliance.id : null)
+                            if (opening) {
+                              setTimerHours((current) => ({
+                                ...current,
+                                [appliance.id]: String(appliance.proposedHours),
+                              }))
+                            }
+                          }}
+                          aria-expanded={timerOpenId === appliance.id}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+                        >
+                          <Timer size={14} /> {timerOpenId === appliance.id ? 'Close timer planner' : 'Plan auto-off timer'}
+                        </button>
+                        {timerOpenId === appliance.id && (
+                          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3">
+                            <label htmlFor={`timer-hours-${appliance.id}`} className="block text-xs font-semibold text-blue-900">
+                              Projected run time before timer switches off (hours/day)
+                            </label>
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              <input
+                                id={`timer-hours-${appliance.id}`}
+                                type="number"
+                                min="0"
+                                max="24"
+                                step="0.25"
+                                required
+                                value={timerHours[appliance.id] ?? String(appliance.proposedHours)}
+                                onChange={(event) => setTimerHours((current) => ({
+                                  ...current,
+                                  [appliance.id]: event.target.value,
+                                }))}
+                                className="w-24 rounded-lg border border-blue-200 bg-white px-2.5 py-2 text-sm text-blue-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                              />
+                              <button
+                                type="button"
+                                disabled={
+                                  timerHours[appliance.id] === undefined
+                                  || timerHours[appliance.id].trim() === ''
+                                  || !Number.isFinite(Number(timerHours[appliance.id]))
+                                  || Number(timerHours[appliance.id]) < 0
+                                  || Number(timerHours[appliance.id]) > 24
+                                }
+                                onClick={() => {
+                                  setProposedHours((current) => ({
+                                    ...current,
+                                    [appliance.id]: Number(timerHours[appliance.id]),
+                                  }))
+                                  setTimerOpenId(null)
+                                }}
+                                className="rounded-lg bg-blue-700 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Apply to projection
+                              </button>
+                            </div>
+                            <p className="mt-2 text-[11px] leading-5 text-amber-900">
+                              Planning aid only—not an active countdown or remote power control. Use a compatible appliance timer or smart plug to actually switch power off.
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-blue-50 pt-3">
+                      <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-blue-50 pt-3">
                         <button
                           type="button"
                           onClick={() => {
@@ -214,36 +275,6 @@ export function Optimization() {
                           {editingId === appliance.id ? <X size={14} /> : <Pencil size={14} />}
                           {editingId === appliance.id ? 'Close editor' : 'Edit details'}
                         </button>
-                        {changed && (
-                          <button
-                            type="button"
-                            disabled={savingId === appliance.id}
-                            onClick={() => {
-                              setSavingId(appliance.id)
-                              setActionError(null)
-                              setSavedId(null)
-                              void saveAppliance({
-                                name: appliance.name,
-                                wattage: appliance.wattage,
-                                quantity: appliance.quantity,
-                                hoursPerDay: appliance.proposedHours,
-                                daysPerMonth: appliance.daysPerMonth,
-                              }, appliance.id).then(() => {
-                                setProposedHours((current) => {
-                                  const next = { ...current }
-                                  delete next[appliance.id]
-                                  return next
-                                })
-                                setSavedId(appliance.id)
-                              }).catch((cause: unknown) => {
-                                setActionError(cause instanceof Error ? cause.message : `Could not save ${appliance.name}.`)
-                              }).finally(() => setSavingId(null))
-                            }}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-700 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-60"
-                          >
-                            {savingId === appliance.id ? <span className="animate-pulse">Saving…</span> : <><Save size={14} /> Save proposed hours</>}
-                          </button>
-                        )}
                         {savedId === appliance.id && <span role="status" className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700"><Check size={14} /> Saved</span>}
                       </div>
                       {editingId === appliance.id && editForm && (

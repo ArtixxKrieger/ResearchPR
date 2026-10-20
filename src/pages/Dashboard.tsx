@@ -429,8 +429,11 @@ export function Dashboard() {
           className="scroll-mt-6"
         >
           {!household && (
-            <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-700">
-              Save actual billed info first to create a household record and enable appliance saving.
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
+              <p>Save your bill details first. The household record is required before appliances can be attached and saved.</p>
+              <a href="#actual-bill" className="shrink-0 font-bold text-blue-800 underline underline-offset-2 hover:text-blue-950">
+                Go to bill form
+              </a>
             </div>
           )}
           <div id="appliance-library" className="mb-5 scroll-mt-6 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
@@ -514,7 +517,7 @@ export function Dashboard() {
                 disabled={!household || selectedLibraryItems.length === 0 || librarySaving}
                 className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-blue-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
-                <Plus size={15} /> {librarySaving ? 'Adding appliances…' : `Add ${selectedLibraryItems.length} selected`}
+                <Plus size={15} /> {librarySaving ? 'Adding appliances…' : !household ? 'Save bill first to add' : `Add ${selectedLibraryItems.length} selected`}
               </button>
             </div>
           </div>
@@ -563,7 +566,7 @@ export function Dashboard() {
               <div className="mt-4 flex flex-wrap justify-end gap-2">
                 {editingId && <button type="button" onClick={cancelEdit} className="rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50">Cancel</button>}
                 <button type="submit" disabled={!household || applianceSaving} className="inline-flex items-center gap-1.5 rounded-xl bg-blue-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50">
-                  <Plus size={15} /> {applianceSaving ? 'Saving…' : editingId ? 'Save changes' : 'Add custom appliance'}
+                  <Plus size={15} /> {applianceSaving ? 'Saving…' : editingId ? 'Save changes' : !household ? 'Save bill first' : 'Add custom appliance'}
                 </button>
               </div>
             </form>
