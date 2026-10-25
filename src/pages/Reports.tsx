@@ -12,6 +12,7 @@ import {
 import { Link } from 'react-router-dom'
 import { EmptyState, LoadingState, PageHeading, SectionCard } from '../components/Ui'
 import { useEnergy } from '../data/EnergyContext'
+import { logUsageEvent } from '../lib/research'
 import { calculateMonthlyKwh, formatNumber, formatPeso, rankAppliances } from '../lib/calculations'
 
 function ApplianceAxisLabel({
@@ -55,7 +56,7 @@ function ApplianceAxisLabel({
 }
 
 export function Reports() {
-  const { household, appliances, loading, proposedHours } = useEnergy()
+  const { user, household, appliances, loading, proposedHours } = useEnergy()
   const [applianceSearch, setApplianceSearch] = useState('')
   const ranked = useMemo(() => rankAppliances(appliances), [appliances])
   const originalKwh = ranked.reduce((total, item) => total + item.originalKwh, 0)
@@ -103,6 +104,22 @@ export function Reports() {
     link.download = 'pagsibol-energy-report.csv'
     link.click()
     window.setTimeout(() => URL.revokeObjectURL(url), 0)
+    logUsageEvent(user?.id, 'report_exported', {
+      applianceCount: ranked.length,
+      originalKwh: Number(originalKwh.toFixed(2)),
+      projectedKwh: Number(projectedKwh.toFixed(2)),
+      savedKwh: Number(savedKwh.toFixed(2)),
+    })
+  }
+
+  function printReport() {
+    logUsageEvent(user?.id, 'report_printed', {
+      applianceCount: ranked.length,
+      originalKwh: Number(originalKwh.toFixed(2)),
+      projectedKwh: Number(projectedKwh.toFixed(2)),
+      savedKwh: Number(savedKwh.toFixed(2)),
+    })
+    window.print()
   }
 
   if (loading) return <LoadingState />
@@ -118,7 +135,7 @@ export function Reports() {
             <button type="button" onClick={downloadCsv} disabled={!appliances.length} className="inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-4">
               <Download size={16} /> Export CSV
             </button>
-            <button type="button" onClick={() => window.print()} disabled={!appliances.length} className="inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-700 px-3 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-4">
+            <button type="button" onClick={printReport} disabled={!appliances.length} className="inline-flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-blue-700 px-3 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-4">
               <Printer size={16} /> Print report
             </button>
           </div>

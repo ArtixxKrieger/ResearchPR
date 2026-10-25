@@ -1,19 +1,23 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { Activity, BarChart3, Bolt, Check, ClipboardList, Cloud, CloudOff, House, LogOut, RefreshCw, X } from 'lucide-react'
-import { useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Activity, BarChart3, Bolt, Check, ClipboardList, Cloud, CloudOff, House, LogOut, RefreshCw, ShieldCheck, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useEnergy } from '../data/EnergyContext'
+import { logUsageEvent } from '../lib/research'
 import { ThemeSelector } from './ThemeSelector'
 import { PwaInstallButton } from './PwaInstallButton'
 
-const navigation = [
+const baseNavigation = [
   { to: '/', label: 'Dashboard', icon: House, end: true },
   { to: '/optimization', label: 'Optimization', icon: Activity, end: false },
   { to: '/reports', label: 'Results & Reports', icon: BarChart3, end: false },
 ]
 
+const adminNavigation = { to: '/admin', label: 'Research admin', icon: ShieldCheck, end: false }
+
 export function AppLayout() {
   const {
     user,
+    isAdmin,
     error,
     dismissError,
     signOut,
@@ -23,8 +27,15 @@ export function AppLayout() {
     syncOfflineChanges,
     resolveOfflineConflict,
   } = useEnergy()
+  const location = useLocation()
+  const navigation = isAdmin ? [...baseNavigation, adminNavigation] : baseNavigation
   const [signOutError, setSignOutError] = useState<string | null>(null)
   const [syncError, setSyncError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    logUsageEvent(user.id, 'page_view', { path: location.pathname })
+  }, [location.pathname, user])
 
   async function handleSignOut() {
     setSignOutError(null)
@@ -68,6 +79,11 @@ export function AppLayout() {
           <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3">
             <div className="hidden min-w-0 max-w-48 truncate text-right sm:block">
               <p className="text-xs font-semibold text-blue-200">{user?.email}</p>
+              {isAdmin && (
+                <p className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">
+                  <ShieldCheck size={11} /> Research admin
+                </p>
+              )}
             </div>
             <ThemeSelector variant="dark" compactOnMobile />
             <PwaInstallButton dark compactOnMobile />
@@ -239,7 +255,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
-      <nav aria-label="Main navigation" className="mobile-dock fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-blue-100 bg-white/95 px-3 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] shadow-[0_-8px_28px_rgba(15,40,75,0.08)] backdrop-blur lg:hidden">
+      <nav aria-label="Main navigation" className={`mobile-dock fixed inset-x-0 bottom-0 z-40 grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} border-t border-blue-100 bg-white/95 px-3 pt-2 pb-[max(0.65rem,env(safe-area-inset-bottom))] shadow-[0_-8px_28px_rgba(15,40,75,0.08)] backdrop-blur print:hidden lg:hidden`}>
         {navigation.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}

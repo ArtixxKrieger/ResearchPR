@@ -3,6 +3,7 @@ import { ArrowRight, Bolt, LockKeyhole, Mail, MapPin, Phone, UserRound } from 'l
 import { supabaseConfigError } from '../lib/supabaseClient'
 import { useEnergy } from '../data/EnergyContext'
 import { ThemeSelector } from '../components/ThemeSelector'
+import { normalizePhoneNumber, sanitizePlainText } from '../lib/inputValidation'
 
 export function AuthPage() {
   const { signIn, signUp, error: sessionError } = useEnergy()
@@ -31,7 +32,7 @@ export function AuthPage() {
     setPasswordError(null)
     setMessage(null)
     if (mode === 'sign-up') {
-      const normalizedName = displayName.trim()
+      const normalizedName = sanitizePlainText(displayName, 81)
       if (!normalizedName) {
         setDisplayNameError('Display name is required.')
       } else if (normalizedName.length > 80) {
@@ -44,7 +45,7 @@ export function AuthPage() {
       } else if (!/^\+?[\d\s().-]+$/.test(normalizedPhone) || phoneDigits.length < 7 || phoneDigits.length > 15) {
         setPhoneError('Enter a valid phone number using 7 to 15 digits. Spaces, +, parentheses, dots, and hyphens are okay.')
       }
-      const normalizedAddress = homeAddress.trim()
+      const normalizedAddress = sanitizePlainText(homeAddress, 301)
       if (!normalizedAddress) setHomeAddressError('Home address is required.')
       else if (normalizedAddress.length > 300) setHomeAddressError('Home address must be 300 characters or less.')
       if (!normalizedName || normalizedName.length > 80 || !normalizedPhone
@@ -52,17 +53,21 @@ export function AuthPage() {
         || phoneDigits.length < 7 || phoneDigits.length > 15
         || !normalizedAddress || normalizedAddress.length > 300) return
     }
-    const normalizedEmail = email.trim()
+    const normalizedEmail = email.trim().normalize('NFC')
     if (!normalizedEmail) {
       setEmailError('Email address is required.')
       return
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    if (normalizedEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       setEmailError('Enter a valid email address.')
       return
     }
     if (password.length < 8) {
       setPasswordError('Password must be at least 8 characters.')
+      return
+    }
+    if (password.length > 128) {
+      setPasswordError('Password must be 128 characters or less.')
       return
     }
 
@@ -71,17 +76,13 @@ export function AuthPage() {
       if (mode === 'sign-in') {
         await signIn(normalizedEmail, password)
       } else {
-        const normalizedPhone = phone.trim()
-        const digits = normalizedPhone.replace(/\D/g, '')
-        const storedPhone = digits.length === 11 && digits.startsWith('0')
-          ? `+63${digits.slice(1)}`
-          : digits.startsWith('63') || normalizedPhone.startsWith('+') ? `+${digits}` : digits
+        const storedPhone = normalizePhoneNumber(phone)
         const needsEmailConfirmation = await signUp(
           normalizedEmail,
           password,
-          displayName.trim(),
+          sanitizePlainText(displayName, 80),
           storedPhone,
-          homeAddress.trim(),
+          sanitizePlainText(homeAddress, 300),
         )
         if (needsEmailConfirmation) {
           setError('Supabase is still requiring email confirmation. Disable Confirm email in the Supabase Auth settings, then create the account again.')

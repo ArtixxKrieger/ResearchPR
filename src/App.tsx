@@ -11,9 +11,10 @@ import { LandingPage } from './pages/LandingPage'
 const Dashboard = lazy(() => import('./pages/Dashboard').then(({ Dashboard: page }) => ({ default: page })))
 const Optimization = lazy(() => import('./pages/Optimization').then(({ Optimization: page }) => ({ default: page })))
 const Reports = lazy(() => import('./pages/Reports').then(({ Reports: page }) => ({ default: page })))
+const Admin = lazy(() => import('./pages/Admin').then(({ Admin: page }) => ({ default: page })))
 
 function AppRoutes() {
-  const { user, authLoading } = useEnergy()
+  const { user, authLoading, isAdmin, adminLoading } = useEnergy()
 
   if (authLoading) return <LoadingState />
 
@@ -26,6 +27,10 @@ function AppRoutes() {
             <Route path="login" element={<Navigate to="/" replace />} />
             <Route path="optimization" element={<Optimization />} />
             <Route path="reports" element={<Reports />} />
+            <Route
+              path="admin"
+              element={adminLoading ? <LoadingState /> : isAdmin ? <Admin /> : <Navigate to="/" replace />}
+            />
             <Route path="*" element={<Dashboard />} />
           </Route>
         ) : (

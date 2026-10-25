@@ -215,7 +215,7 @@ export function Optimization() {
                           <Timer size={14} /> {timerOpenId === appliance.id ? 'Close timer planner' : 'Plan auto-off timer'}
                         </button>
                         {timerOpenId === appliance.id && (
-                          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3">
+                          <div className="timer-planner mt-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3">
                             <label htmlFor={`timer-hours-${appliance.id}`} className="block text-xs font-semibold text-blue-900">
                               Projected run time before timer switches off (hours/day)
                             </label>

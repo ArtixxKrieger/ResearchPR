@@ -3,6 +3,7 @@ import { ArrowDownRight, ArrowUpRight, Bolt, Check, Pencil, Plus, Search, Trash2
 import { Link } from 'react-router-dom'
 import { useEnergy } from '../data/EnergyContext'
 import { calculateApplianceKwh, formatNumber, formatPeso } from '../lib/calculations'
+import { MAX_DATABASE_NUMERIC, MAX_POSTGRES_INTEGER, numericInputError, sanitizePlainText } from '../lib/inputValidation'
 import type { Appliance, ApplianceInput } from '../types'
 import { EmptyState, Field, LoadingState, PageHeading, SectionCard } from '../components/Ui'
 
@@ -58,30 +59,21 @@ const applianceLibrary: Array<{ name: string; category: string; wattage: number;
   { name: 'Hair dryer', category: 'Personal care', wattage: 1200, hoursPerDay: 0.2, daysPerMonth: 20 },
 ]
 
-function validateNumber(value: string, label: string, min: number, max?: number): string | undefined {
-  if (!value.trim()) return `${label} is required.`
-  const parsed = Number(value)
-  if (!Number.isFinite(parsed)) return `${label} must be a valid number.`
-  if (parsed < min) return `${label} must be ${min === 0 ? '0 or greater' : `at least ${min}`}.`
-  if (max !== undefined && parsed > max) return `${label} must be ${max} or less.`
-  return undefined
-}
-
 function validateAppliance(form: ApplianceForm): ApplianceErrors {
   const errors: ApplianceErrors = {}
-  if (!form.name.trim()) errors.name = 'Appliance name is required.'
-  errors.wattage = validateNumber(form.wattage, 'Wattage', 0.01)
-  errors.quantity = validateNumber(form.quantity, 'Quantity', 1)
-  if (form.quantity && !Number.isInteger(Number(form.quantity))) errors.quantity = 'Quantity must be a whole number.'
-  errors.hoursPerDay = validateNumber(form.hoursPerDay, 'Hours per day', 0, 24)
-  errors.daysPerMonth = validateNumber(form.daysPerMonth, 'Days per month', 0, 31)
-  if (form.daysPerMonth && !Number.isInteger(Number(form.daysPerMonth))) errors.daysPerMonth = 'Days per month must be a whole number.'
+  const name = sanitizePlainText(form.name, 121)
+  if (!name) errors.name = 'Appliance name is required.'
+  else if (name.length > 120) errors.name = 'Appliance name must be 120 characters or less.'
+  errors.wattage = numericInputError(form.wattage, 'Wattage', 0.01, MAX_DATABASE_NUMERIC)
+  errors.quantity = numericInputError(form.quantity, 'Quantity', 1, MAX_POSTGRES_INTEGER, true)
+  errors.hoursPerDay = numericInputError(form.hoursPerDay, 'Hours per day', 0, 24)
+  errors.daysPerMonth = numericInputError(form.daysPerMonth, 'Days per month', 0, 31, true)
   return Object.fromEntries(Object.entries(errors).filter(([, value]) => value)) as ApplianceErrors
 }
 
 function asApplianceInput(form: ApplianceForm): ApplianceInput {
   return {
-    name: form.name.trim(),
+    name: sanitizePlainText(form.name, 120),
     wattage: Number(form.wattage),
     quantity: Number(form.quantity),
     hoursPerDay: Number(form.hoursPerDay),
@@ -175,15 +167,15 @@ export function Dashboard() {
     { number: '03', label: 'Your plan', done: false },
   ]
   const displayName = typeof user?.user_metadata?.display_name === 'string'
-    ? user.user_metadata.display_name.trim()
+    ? sanitizePlainText(user.user_metadata.display_name, 80)
     : ''
 
   async function handleBillSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const errors = {
-      monthlyConsumption: validateNumber(billForm.monthlyConsumption, 'Monthly consumption', 0),
-      billAmount: validateNumber(billForm.billAmount, 'Bill amount', 0),
-      rate: validateNumber(billForm.rate, 'Rate', 0.01),
+      monthlyConsumption: numericInputError(billForm.monthlyConsumption, 'Monthly consumption', 0, MAX_DATABASE_NUMERIC),
+      billAmount: numericInputError(billForm.billAmount, 'Bill amount', 0, MAX_DATABASE_NUMERIC),
+      rate: numericInputError(billForm.rate, 'Rate', 0.01, MAX_DATABASE_NUMERIC),
     }
     setBillErrors(Object.fromEntries(Object.entries(errors).filter(([, value]) => value)) as typeof errors)
     if (Object.values(errors).some(Boolean)) return
@@ -251,8 +243,9 @@ export function Dashboard() {
 
     for (const item of selectedLibraryItems) {
       const quantity = Number(libraryQuantities[item.name])
-      if (!Number.isInteger(quantity) || quantity < 1) {
-        failed.push(`${item.name}: enter a quantity of at least 1.`)
+      const quantityError = numericInputError(quantity, `${item.name} quantity`, 1, MAX_POSTGRES_INTEGER, true)
+      if (quantityError) {
+        failed.push(`${quantityError}`)
         continue
       }
       try {
@@ -557,7 +550,7 @@ export function Dashboard() {
                 </label>
               )}
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field id="appliance-name" label="Appliance name" placeholder="e.g. Electric fan" value={applianceForm.name} error={applianceErrors.name} onChange={(event) => setApplianceForm({ ...applianceForm, name: event.target.value })} />
+                <Field id="appliance-name" label="Appliance name" maxLength={120} placeholder="e.g. Electric fan" value={applianceForm.name} error={applianceErrors.name} onChange={(event) => setApplianceForm({ ...applianceForm, name: event.target.value })} />
                 <Field id="appliance-wattage" label="Wattage (W)" type="number" min="0.01" step="0.01" placeholder="e.g. 60" value={applianceForm.wattage} error={applianceErrors.wattage} onChange={(event) => setApplianceForm({ ...applianceForm, wattage: event.target.value })} />
                 <Field id="appliance-quantity" label="Quantity" type="number" min="1" step="1" value={applianceForm.quantity} error={applianceErrors.quantity} onChange={(event) => setApplianceForm({ ...applianceForm, quantity: event.target.value })} />
                 <Field id="appliance-hours" label="Hours per day" type="number" min="0" max="24" step="0.25" placeholder="e.g. 8" value={applianceForm.hoursPerDay} error={applianceErrors.hoursPerDay} onChange={(event) => setApplianceForm({ ...applianceForm, hoursPerDay: event.target.value })} />
