@@ -214,6 +214,11 @@ html[data-theme="dark"] .mobile-dock a[aria-current="page"] > span:first-child {
   color: #111 !important;
 }
 
+html[data-theme="dark"] .admin-tab[aria-selected="true"] {
+  background-color: #fcd34d !important;
+  color: #111 !important;
+}
+
 html[data-theme="dark"] [class~="bg-amber-300"][class~="text-blue-950"],
 html[data-theme="dark"] [class~="bg-amber-300"] [class~="text-blue-950"] {
   color: #111 !important;
