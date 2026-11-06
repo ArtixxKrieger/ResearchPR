@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Pagsibol Household Energy Study",
-  "short_name": "Pagsibol Energy",
+  "name": "Bancaan Household Energy Study",
+  "short_name": "Bancaan Energy",
   "description": "Explore household electricity use, appliance estimates, and practical schedule changes.",
   "lang": "en-PH",
   "start_url": "/",

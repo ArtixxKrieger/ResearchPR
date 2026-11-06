@@ -69,7 +69,7 @@ export function AppLayout() {
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold tracking-tight text-white sm:text-base">
-                Pagsibol <span className="font-normal text-blue-200">/ energy study</span>
+                Bancaan <span className="font-normal text-blue-200">/ energy study</span>
               </span>
               <span className="block truncate text-[11px] tracking-wide text-blue-300">
                 HOUSEHOLD ENERGY · NAIC, CAVITE

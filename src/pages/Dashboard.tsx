@@ -31,7 +31,8 @@ const appliancePresets: Array<{ name: string; wattage: number; hoursPerDay: numb
   { name: 'Television', wattage: 100, hoursPerDay: 5 },
   { name: 'Refrigerator', wattage: 150, hoursPerDay: 24 },
   { name: 'Rice cooker', wattage: 700, hoursPerDay: 1 },
-  { name: 'Air conditioner', wattage: 1000, hoursPerDay: 8 },
+  { name: 'Window-type air conditioner', wattage: 1000, hoursPerDay: 8 },
+  { name: 'Split-type air conditioner', wattage: 1000, hoursPerDay: 8 },
 ]
 
 const applianceLibrary: Array<{ name: string; category: string; wattage: number; hoursPerDay: number; daysPerMonth: number }> = [
@@ -39,8 +40,10 @@ const applianceLibrary: Array<{ name: string; category: string; wattage: number;
   { name: 'Fluorescent light', category: 'Lighting', wattage: 40, hoursPerDay: 6, daysPerMonth: 30 },
   { name: 'Ceiling fan', category: 'Cooling', wattage: 75, hoursPerDay: 8, daysPerMonth: 30 },
   { name: 'Stand fan', category: 'Cooling', wattage: 60, hoursPerDay: 8, daysPerMonth: 30 },
-  { name: 'Window air conditioner (1 HP)', category: 'Cooling', wattage: 746, hoursPerDay: 8, daysPerMonth: 30 },
-  { name: 'Window air conditioner (1.5 HP)', category: 'Cooling', wattage: 1119, hoursPerDay: 8, daysPerMonth: 30 },
+  { name: 'Window-type air conditioner (1 HP)', category: 'Cooling', wattage: 746, hoursPerDay: 8, daysPerMonth: 30 },
+  { name: 'Window-type air conditioner (1.5 HP)', category: 'Cooling', wattage: 1119, hoursPerDay: 8, daysPerMonth: 30 },
+  { name: 'Split-type air conditioner (1 HP)', category: 'Cooling', wattage: 746, hoursPerDay: 8, daysPerMonth: 30 },
+  { name: 'Split-type air conditioner (1.5 HP)', category: 'Cooling', wattage: 1119, hoursPerDay: 8, daysPerMonth: 30 },
   { name: 'Refrigerator', category: 'Kitchen', wattage: 150, hoursPerDay: 8, daysPerMonth: 30 },
   { name: 'Rice cooker', category: 'Kitchen', wattage: 700, hoursPerDay: 1, daysPerMonth: 30 },
   { name: 'Electric kettle', category: 'Kitchen', wattage: 1500, hoursPerDay: 0.3, daysPerMonth: 30 },

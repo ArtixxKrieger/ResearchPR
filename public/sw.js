@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pagsibol-shell-v1'
+const CACHE_NAME = 'bancaan-shell-v1'
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -20,7 +20,7 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((keys) => Promise.all(
         keys
-          .filter((key) => key.startsWith('pagsibol-shell-') && key !== CACHE_NAME)
+          .filter((key) => (key.startsWith('pagsibol-shell-') || key.startsWith('bancaan-shell-')) && key !== CACHE_NAME)
           .map((key) => caches.delete(key)),
       ))
       .then(() => self.clients.claim()),
@@ -48,7 +48,7 @@ self.addEventListener('fetch', (event) => {
         .catch(async () => {
           const cachedPage = await caches.match('/index.html')
           if (cachedPage) return cachedPage
-          return new Response('You are offline. Reconnect to load the Pagsibol Energy Study.', {
+          return new Response('You are offline. Reconnect to load the Bancaan Energy Study.', {
             status: 503,
             headers: { 'Content-Type': 'text/plain; charset=utf-8' },
           })

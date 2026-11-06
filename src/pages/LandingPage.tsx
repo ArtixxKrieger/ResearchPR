@@ -20,12 +20,12 @@ export function LandingPage() {
   return (
     <main className="landing-page min-h-screen overflow-hidden bg-blue-50 text-blue-950">
       <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
-        <a href="#top" className="flex min-w-0 items-center gap-3" aria-label="Pagsibol Energy Study home">
+        <a href="#top" className="flex min-w-0 items-center gap-3" aria-label="Bancaan Energy Study home">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-300 text-blue-950">
             <Bolt size={22} fill="currentColor" />
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-sm font-bold tracking-tight text-blue-950">Pagsibol <span className="font-normal text-blue-500">/ energy study</span></span>
+            <span className="block truncate text-sm font-bold tracking-tight text-blue-950">Bancaan <span className="font-normal text-blue-500">/ energy study</span></span>
             <span className="block text-[9px] font-semibold uppercase tracking-[0.18em] text-blue-400">Naic, Cavite</span>
           </span>
         </a>
@@ -188,7 +188,7 @@ export function LandingPage() {
 
       <footer className="border-t border-blue-100 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-6 text-xs text-blue-500 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <p className="font-semibold text-blue-800">Pagsibol 4A Subdivision · Naic, Cavite</p>
+          <p className="font-semibold text-blue-800">Bancaan 4A Subdivision · Naic, Cavite</p>
           <p>Estimates are illustrative and depend on the values entered. They are not a utility bill or a guaranteed saving.</p>
         </div>
       </footer>

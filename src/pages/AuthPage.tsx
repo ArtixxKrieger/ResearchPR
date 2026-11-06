@@ -105,7 +105,7 @@ export function AuthPage() {
           <div className="flex items-center gap-3">
             <span className="grid size-12 place-items-center rounded-2xl bg-amber-300 text-blue-950"><Bolt size={25} fill="currentColor" /></span>
             <div>
-              <p className="font-bold tracking-tight">Pagsibol <span className="font-normal text-blue-200">/ energy study</span></p>
+              <p className="font-bold tracking-tight">Bancaan <span className="font-normal text-blue-200">/ energy study</span></p>
               <p className="text-[10px] tracking-[0.18em] text-blue-300">NAIC, CAVITE</p>
             </div>
           </div>
@@ -132,7 +132,7 @@ export function AuthPage() {
             ))}
           </div>
         </div>
-        <p className="relative text-[10px] uppercase tracking-[0.18em] text-blue-400">Household energy research · Pagsibol 4A</p>
+        <p className="relative text-[10px] uppercase tracking-[0.18em] text-blue-400">Household energy research · Bancaan 4A</p>
       </section>
 
       <section className="grid min-h-screen place-items-center px-5 py-16 sm:px-8 lg:px-10">
@@ -143,7 +143,7 @@ export function AuthPage() {
           <div className="mb-7 flex items-center gap-3 lg:hidden">
             <span className="grid size-12 place-items-center rounded-2xl bg-amber-300 text-blue-950"><Bolt size={25} fill="currentColor" /></span>
             <div>
-              <p className="font-bold text-blue-950">Pagsibol <span className="font-normal text-blue-500">/ energy study</span></p>
+              <p className="font-bold text-blue-950">Bancaan <span className="font-normal text-blue-500">/ energy study</span></p>
               <p className="text-[10px] tracking-[0.16em] text-blue-400">NAIC, CAVITE</p>
             </div>
           </div>

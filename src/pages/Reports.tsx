@@ -101,7 +101,7 @@ export function Reports() {
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
     const link = document.createElement('a')
     link.href = url
-    link.download = 'pagsibol-energy-report.csv'
+    link.download = 'bancaan-energy-report.csv'
     link.click()
     window.setTimeout(() => URL.revokeObjectURL(url), 0)
     logUsageEvent(user?.id, 'report_exported', {
@@ -149,7 +149,7 @@ export function Reports() {
       ) : (
         <div className="print-report space-y-5">
           <div className="hidden print:block">
-            <p className="text-sm font-bold uppercase tracking-widest text-blue-700">Pagsibol 4A Subdivision · Naic, Cavite</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-blue-700">Bancaan 4A Subdivision · Naic, Cavite</p>
             <h1 className="mt-2 text-2xl font-bold">Household Energy Optimization — Projected Report</h1>
             <p className="mt-1 text-sm">Prepared {new Date().toLocaleDateString('en-PH')}</p>
           </div>

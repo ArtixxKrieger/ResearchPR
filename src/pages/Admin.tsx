@@ -558,7 +558,7 @@ export function Admin() {
 
   function exportParticipants() {
     if (!view) return
-    downloadCsv('pagsibol-participants.csv', [
+    downloadCsv('bancaan-participants.csv', [
       [
         'Participant ID', 'Display name', 'Email', 'Phone', 'Home address', 'Signed up',
         'Last sign-in', 'Email confirmed', 'Data status', 'Billed kWh', 'Bill amount (PHP)',
@@ -605,7 +605,7 @@ export function Admin() {
 
   function exportAppliances() {
     if (!view) return
-    downloadCsv('pagsibol-appliances.csv', [
+    downloadCsv('bancaan-appliances.csv', [
       [
         'Email', 'Display name', 'Appliance', 'Wattage (W)', 'Quantity', 'Hours/day',
         'Days/month', 'Monthly kWh', 'Monthly cost (PHP)', 'Share of estimate (%)', 'Added', 'Updated',
@@ -630,7 +630,7 @@ export function Admin() {
   function exportActivity() {
     if (!view || !dataset) return
     const nameByUser = new Map(view.participants.map((participant) => [participant.userId, participant]))
-    downloadCsv('pagsibol-activity.csv', [
+    downloadCsv('bancaan-activity.csv', [
       ['Email', 'Display name', 'Event', 'Detail', 'Recorded at'],
       ...dataset.recent_events.map((event) => {
         const participant = nameByUser.get(event.user_id)
